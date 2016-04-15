@@ -1,5 +1,8 @@
 package coroutines.`yield`
 
+import coroutines.annotations.coroutine
+import coroutines.annotations.operator
+import coroutines.annotations.suspend
 import coroutines.api.Continuation
 import coroutines.api.Coroutine
 
@@ -25,7 +28,7 @@ fun main(args: Array<String>) {
 
 // LIBRARY CODE
 
-fun <T> generate(c: () -> Coroutine<GeneratorController<T>>): Sequence<T> = object : Sequence<T> {
+fun <T> generate(@coroutine c: () -> Coroutine<GeneratorController<T>>): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorController<T>()
         iterator.setNextStep(c().entryPoint(iterator))
@@ -51,11 +54,11 @@ class GeneratorController<T>() : AbstractIterator<T>() {
         this.nextStep = step
     }
 
-    fun yieldValue(value: T, c: Continuation<Unit>) {
+    @suspend fun yieldValue(value: T, c: Continuation<Unit>) {
         advance(value, c)
     }
 
-    fun handleResult(result: Unit, c: Continuation<Nothing>) {
+    @operator fun handleResult(result: Unit, c: Continuation<Nothing>) {
         handleResult()
     }
 }

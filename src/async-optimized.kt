@@ -1,5 +1,8 @@
 package coroutines.async
 
+import coroutines.annotations.coroutine
+import coroutines.annotations.operator
+import coroutines.annotations.suspend
 import coroutines.api.Continuation
 import coroutines.api.Coroutine
 import java.util.concurrent.CompletableFuture
@@ -30,7 +33,7 @@ fun main(args: Array<String>) {
 
 // LIBRARY CODE
 
-fun <T> async(c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> = FutureController<T>().apply {
+fun <T> async(@coroutine c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> = FutureController<T>().apply {
     c().entryPoint(this).resume(Unit)
 }
 
@@ -38,7 +41,7 @@ fun <T> async(c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> = F
     FutureController extends CompletableFuture to economize on allocations
  */
 class FutureController<T> : CompletableFuture<T>() {
-    fun <V> await(future: CompletableFuture<V>, machine: Continuation<V>) {
+    @suspend fun <V> await(future: CompletableFuture<V>, machine: Continuation<V>) {
         future.whenComplete { value, throwable ->
             if (throwable == null)
                 machine.resume(value)
@@ -47,11 +50,11 @@ class FutureController<T> : CompletableFuture<T>() {
         }
     }
 
-    fun handleResult(value: T, c: Continuation<Nothing>) {
+    @operator fun handleResult(value: T, c: Continuation<Nothing>) {
         complete(value)
     }
 
-    fun handleException(t: Throwable, c: Continuation<Nothing>) {
+    @operator fun handleException(t: Throwable, c: Continuation<Nothing>) {
         completeExceptionally(t)
     }
 }
