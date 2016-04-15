@@ -1,24 +1,6 @@
 package coroutines.api
 
 /**
- * Annotation to mark suspending functions
- */
-@Target(AnnotationTarget.FUNCTION)
-annotation class suspend
-
-/**
- * Annotation to mark handler operators
- */
-@Target(AnnotationTarget.FUNCTION)
-annotation class operator
-
-/**
- * Annotation to mark coroutine parameters of builders
- */
-@Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class coroutine_
-
-/**
  * Interface representing a coroutine, call the `entryPoint()` function to set a controller
  * and retrieve the starting continuation
  */
