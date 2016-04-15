@@ -1,6 +1,6 @@
-package noController.asyncNoCopying
+package async
 
-import noController.api.*
+import coroutines.api.*
 import java.util.concurrent.CompletableFuture
 
 // TEST CODE
@@ -30,7 +30,7 @@ fun main(args: Array<String>) {
 // LIBRARY CODE
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> async(@coroutine c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> {
+fun <T> async(@coroutine_ c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> {
     val controller = FutureController<T>()
     c().entryPoint(controller).resume(Unit)
     return controller.future

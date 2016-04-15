@@ -1,4 +1,4 @@
-package noController.api
+package coroutines.api
 
 /**
  * Annotation to mark suspending functions
@@ -16,7 +16,7 @@ annotation class operator
  * Annotation to mark coroutine parameters of builders
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class coroutine
+annotation class coroutine_
 
 /**
  * Interface representing a coroutine, call the `entryPoint()` function to set a controller

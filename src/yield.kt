@@ -1,6 +1,6 @@
-package noController.`yield`.simplified
+package `yield`
 
-import noController.api.*
+import coroutines.api.*
 
 // TEST CODE
 
@@ -25,7 +25,7 @@ fun main(args: Array<String>) {
 // LIBRARY CODE
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> generate(@coroutine c: () -> Coroutine<GeneratorController<T>>): Sequence<T> = object : Sequence<T> {
+fun <T> generate(@coroutine_ c: () -> Coroutine<GeneratorController<T>>): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorController<T>()
         iterator.setNextStep(c().entryPoint(iterator))

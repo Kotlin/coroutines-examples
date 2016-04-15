@@ -1,7 +1,7 @@
-package noController.`yield`
+package coroutines.`yield`
 
-import noController.api.Continuation
-import noController.api.Coroutine
+import coroutines.api.Continuation
+import coroutines.api.Coroutine
 
 // TEST CODE
 

@@ -1,7 +1,7 @@
-package noController.async
+package coroutines.async
 
-import noController.api.Continuation
-import noController.api.Coroutine
+import coroutines.api.Continuation
+import coroutines.api.Coroutine
 import java.util.concurrent.CompletableFuture
 
 // TEST CODE
