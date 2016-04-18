@@ -365,7 +365,7 @@ class <anonymous_for_state_machine> implements Coroutine<...> {
 }    
 ```  
 
-> Find more state machine examples in [async.kt](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/async.kt#L60) and [yield.kt](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/yield.kt#L58)  
+> Find more state machine examples in [async.kt](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/async.kt#L60) and [yield.kt](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/yield.kt#L58)  
 
 Note: boxing can be eliminated here, through having another parameter to `resume()`, but we are not getting into these details.
 
@@ -400,7 +400,7 @@ interface Continuation<P> {
 }
 ```
 
-> Find the library code [here](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/coroutines.kt)
+> Find the library code [here](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/coroutines.kt)
 
 So, a typical coroutine builder would look like this:
  
@@ -422,7 +422,7 @@ fun <T> async(coroutine c: () -> Coroutine<FutureController<T>>): Future<T> {
 }    
 ```
  
-> Find a working example [here](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/async.kt#L30)  
+> Find a working example [here](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/async.kt#L30)  
 
 The `c` parameter normally receives a lambda, and its `coroutine` modifier indicates that this lambda is a coroutine, so its body has to be translated into a state machine. Note that such a lambda may have parameters which can be naturally expressed as `(Foo, Bar) -> Coroutine<...>`.  
   
@@ -463,7 +463,7 @@ suspend fun <T> await(f: CompletableFuture<T>, c: Continuation<T>) {
 }
 ``` 
 
-> Find a working example [here](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/async.kt#L42)  
+> Find a working example [here](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/async.kt#L42)  
 
 The `suspend` modifier indicates that this function is special, and its calls are suspension points that correspond to states of a state machine. 
 
@@ -682,7 +682,7 @@ In case of a suspending function mentioning type parameters of the controller cl
 
 # Code examples
   
-See this repo for complete samples: [kotlin-coroutines-examples](https://github.com/abreslav/kotlin-coroutines-examples/tree/master/src).  
+See this directory for complete samples: [kotlin-coroutines](https://github.com/JetBrains/kotlin-coroutines/tree/master/examples).  
  
 #### A builder and controller for async/await
  
@@ -717,7 +717,7 @@ class FutureController<T> {
 }
 ``` 
 
-> See the [repo](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/async.kt#L30) 
+> See the [code](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/async.kt#L30) 
  
 #### A builder and controller for yield
 
@@ -755,7 +755,7 @@ class GeneratorController<T>() : AbstractIterator<T>() {
 } 
 ``` 
 
-> See the [repo](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/yield.kt#L25)
+> See the [code](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/yield.kt#L25)
 
 This makes use of the [`AbstractIterator`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-abstract-iterator/) class from the standard library (find its source code [here](https://github.com/JetBrains/kotlin/blob/dd2ae155315a5c100daaad515068075ce02c99f4/libraries/stdlib/src/kotlin/collections/AbstractIterator.kt#L12)). 
 
@@ -802,4 +802,4 @@ class AsyncIOController<T> {
 }
 ``` 
 
-> See the [repo](https://github.com/abreslav/kotlin-coroutines-examples/blob/master/src/io.kt#L100)
+> See the [code](https://github.com/JetBrains/kotlin-coroutines/blob/master/examples/io.kt#L100)
