@@ -115,10 +115,10 @@ class __anonymous__() : Coroutine<GeneratorController<Int>>,
 
     private var _controller: GeneratorController<Int>? = null
 
-    private fun createOrCopy(): __anonymous__ = if (_controller == null) this else __anonymous__()
-    override fun invoke(): Coroutine<GeneratorController<Int>> = createOrCopy()
+    private fun thisOrNew(): __anonymous__ = if (_controller == null) this else __anonymous__()
+    override fun invoke(): Coroutine<GeneratorController<Int>> = thisOrNew()
     override fun entryPoint(controller: GeneratorController<Int>): Continuation<Unit> {
-        return createOrCopy().apply {
+        return thisOrNew().apply {
             _controller = controller
         }
     }

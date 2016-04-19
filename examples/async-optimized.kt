@@ -69,11 +69,11 @@ class __anonymous__() : Coroutine<FutureController<String>>,
     private val controller: FutureController<String>
         get() = _controller ?: throw UnsupportedOperationException("Coroutine $this should be initialized before use")
 
-    private fun createOrCopy() = if (_controller == null) this else __anonymous__()
-    override fun invoke(): Coroutine<FutureController<String>> = createOrCopy()
+    private fun thisOrNew() = if (_controller == null) this else __anonymous__()
+    override fun invoke(): Coroutine<FutureController<String>> = thisOrNew()
 
     override fun entryPoint(controller: FutureController<String>): Continuation<Unit> {
-        return createOrCopy().apply {
+        return thisOrNew().apply {
             _controller = controller
         }
     }
