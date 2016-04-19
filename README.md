@@ -5,7 +5,7 @@ In this repository, we are working on the design for supporting coroutines in [K
 ## Navigate
 
 * [Informal description of the current proposal](kotlin-coroutines-informal.md)
-* [Example code](examples)
+* [Example code](examples) (this repo can be cloned and opened as a project in IntelliJ IDEA)
 * [Issues](https://github.com/JetBrains/kotlin-coroutines/issues)
 
 ## Review/Propose
