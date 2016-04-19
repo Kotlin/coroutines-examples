@@ -57,7 +57,7 @@ inFile.read(buf) {
     bytesRead ->
     ...
     ...
-    val newData = process(buf, bytesRead)
+    process(buf, bytesRead)
     
     // asynchronously write from `buf`, and when done run the lambda
     outFile.write(buf) {
@@ -83,7 +83,7 @@ asyncIO {
     // we only get to this line when reading completes
     ...
     ...
-    val newData = process(buf, bytesRead)
+    process(buf, bytesRead)
     // suspend while asynchronously writing   
     outFile.write(buf)
     // we only get to this line when writing completes  
@@ -109,7 +109,7 @@ asyncIO {
         // continue when the reading is done
         if (bytesRead == -1) break
         ...
-        val newData = process(buf, bytesRead)
+        process(buf, bytesRead)
         // suspend while asynchronously writing
         outFile.write(buf) 
         // continue when the writing is done
@@ -682,7 +682,7 @@ In case of a suspending function mentioning type parameters of the controller cl
 
 # Code examples
   
-See this directory for complete samples: [kotlin-coroutines](https://github.com/JetBrains/kotlin-coroutines/tree/master/examples).  
+See this directory for complete samples: [kotlin-coroutines/examples](https://github.com/JetBrains/kotlin-coroutines/tree/master/examples).  
  
 #### A builder and controller for async/await
  
