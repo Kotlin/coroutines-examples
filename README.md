@@ -10,7 +10,7 @@ In this repository, we are working on the design for supporting coroutines in [K
 
 ## Review/Propose
 
-Please feel free to review the documents and examples and share your feedback, concerns and proposal in the [issues](https://github.com/JetBrains/kotlin-coroutines/issues) (please look for existing issues first to avoid duplicates).
+Please feel free to review the documents and examples and share your feedback, concerns and proposals in the [issues](https://github.com/JetBrains/kotlin-coroutines/issues) (please look for existing issues first to avoid duplicates).
 
 Some highlighted issues:
 * Arguments **against** implementing this feature are discussed [here](https://github.com/Kotlin/kotlin-coroutines/issues/3)
