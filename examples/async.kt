@@ -1,7 +1,10 @@
 package async
 
-import coroutines.api.*
-import coroutines.annotations.*
+import coroutines.annotations.coroutine
+import coroutines.annotations.operator
+import coroutines.annotations.suspend
+import coroutines.api.Continuation
+import coroutines.api.Coroutine
 import java.util.concurrent.CompletableFuture
 
 // TEST CODE
@@ -90,6 +93,7 @@ class __anonymous__() : Coroutine<FutureController<String>>, Continuation<Any?> 
             when (label) {
                 0 -> {
                     if (exception != null) throw exception
+                    data as Unit
                     println("start")
                     label = 1
                     controller.await(foo(), this)

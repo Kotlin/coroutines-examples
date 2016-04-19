@@ -99,6 +99,7 @@ class __anonymous__() : Coroutine<FutureController<String>>,
             when (label) {
                     0 -> {
                         if (exception != null) throw exception
+                        data as Unit
                         println("start")
                         label = 1
                         controller.await(foo(), this)

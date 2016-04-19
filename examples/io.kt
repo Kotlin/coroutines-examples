@@ -175,6 +175,7 @@ class __anonymous__(
             when (label) {
                 0 -> {
                     if (exception != null) throw exception
+                    data as Unit
                     println("Started")
                     label = 1
                     with (controller) {
