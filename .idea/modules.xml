@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/kotlin-coroutines-examples.iml" filepath="$PROJECT_DIR$/.idea/kotlin-coroutines-examples.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/kotlin-coroutines.iml" filepath="$PROJECT_DIR$/.idea/kotlin-coroutines.iml" />
     </modules>
   </component>
 </project>
