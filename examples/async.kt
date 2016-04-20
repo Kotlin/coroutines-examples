@@ -43,8 +43,8 @@ fun <T> async(@coroutine c: () -> Coroutine<FutureController<T>>): CompletableFu
 class FutureController<T> {
     val future = CompletableFuture<T>()
 
-    @suspend fun <V> await(future: CompletableFuture<V>, machine: Continuation<V>) {
-        future.whenComplete { value, throwable ->
+    @suspend fun <V> await(f: CompletableFuture<V>, machine: Continuation<V>) {
+        f.whenComplete { value, throwable ->
             if (throwable == null)
                 machine.resume(value)
             else
