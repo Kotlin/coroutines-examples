@@ -41,8 +41,8 @@ fun <T> async(@coroutine c: () -> Coroutine<FutureController<T>>): CompletableFu
     FutureController extends CompletableFuture to economize on allocations
  */
 class FutureController<T> : CompletableFuture<T>() {
-    @suspend fun <V> await(future: CompletableFuture<V>, machine: Continuation<V>) {
-        future.whenComplete { value, throwable ->
+    @suspend fun <V> await(f: CompletableFuture<V>, machine: Continuation<V>) {
+        f.whenComplete { value, throwable ->
             if (throwable == null)
                 machine.resume(value)
             else
