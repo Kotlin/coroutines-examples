@@ -1,6 +1,6 @@
 # Kotlin Coroutines
 
-In this repository, we are working on the design for supporting coroutines in [Kotlin](https://kotlinlang.org).
+In this repository, we are working on the design for supporting coroutines in [Kotlin](https://kotlinlang.org). It is logically a part of [KEEP](https://github.com/Kotlin/KEEP).
 
 ## Navigate
 
