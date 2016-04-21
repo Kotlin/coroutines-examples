@@ -12,13 +12,16 @@ We propose to add coroutines to Kotlin. This concept is also known as, or partly
 
 - generators/yield
 - async/await
-- (delimited or stackless) continuations
+- stack-less continuations
+
+> Important limitation: this proposal describes an implementation of coroutines based on so-called stack-less continuations, same  approach is taken by C# and many other languages. As a consequence, the context where suspension/fiber-blocking may occur is limited by the immediate body of a coroutine (+ inlined lambdas). We are considering extending this approach by optional integration with [Quasar](http://docs.paralleluniverse.co/quasar/)'s full continuations which don't suffer from this restriction, see [this issue](https://github.com/Kotlin/kotlin-coroutines/issues/35).
 
 Requirements:
 - No dependency on a particular implementation of Futures or other such rich library;
 - Cover equally the "async/await" use case and "generator blocks".
 
 It is an explicit goal of this proposal to make it possible to utilize Kotlin coroutines as wrappers for different existing asynchronous APIs (such as Java NIO, different implementations of Futures, etc).  
+
 
 ## Table of Contents
 
