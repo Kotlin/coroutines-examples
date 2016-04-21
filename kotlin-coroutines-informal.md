@@ -669,7 +669,9 @@ A function may be marked as `suspend` (and thus be a _suspending function_) if
 * it has at least one parameter, 
 * the last of its parameters (the _continuation parameter_) is not vararg, and
 * has type `Continuation<...>` where the type-argument is called the _result type_ of the suspending function.
-    
+
+> NOTE: the parameter before last can still be `vararg`
+
 Suspending functions can not be called from noinline and crossiniline lambdas or locals classes, or anonymous objects in the body of the coroutine. Essentially, they can only be called from the same places where a `return` expression may occur for the coroutine.
       
 Suspending function can not be called from `finally` blocks (this limitation may be lifted later).
