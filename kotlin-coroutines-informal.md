@@ -14,7 +14,7 @@ We propose to add coroutines to Kotlin. This concept is also known as, or partly
 - async/await
 - stack-less continuations
 
-> Important limitation: this proposal describes an implementation of coroutines based on so-called stack-less continuations, same  approach is taken by C# and many other languages. As a consequence, the context where suspension/fiber-blocking may occur is limited by the immediate body of a coroutine (+ inlined lambdas). We are considering extending this approach by optional integration with [Quasar](http://docs.paralleluniverse.co/quasar/)'s full continuations which don't suffer from this restriction, see [this issue](https://github.com/Kotlin/kotlin-coroutines/issues/35).
+> Important limitation: this proposal describes an implementation of coroutines based on so-called stack-less continuations, same  approach is taken by C# and many other languages. As a consequence, the context where suspension/fiber-blocking may occur is limited by the immediate body of a coroutine (+ inlined lambdas). We are considering extending this approach by optional integration with [Quasar](http://docs.paralleluniverse.co/quasar/)'s full continuations which don't suffer from this restriction, see [this issue](https://github.com/Kotlin/kotlin-coroutines/issues/35) and [this one](https://github.com/Kotlin/kotlin-coroutines/issues/41).
 
 Requirements:
 - No dependency on a particular implementation of Futures or other such rich library;
