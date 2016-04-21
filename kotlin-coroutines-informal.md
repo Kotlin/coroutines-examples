@@ -41,6 +41,7 @@ It is an explicit goal of this proposal to make it possible to utilize Kotlin co
   * [Result handlers](#result-handlers)
   * [Exception handlers](#exception-handlers)
   * [Continuing with exception](#continuing-with-exception)
+  * [Handling `finally` blocks](#handling-finally-blocks)
 * [Type-checking coroutines](#type-checking-coroutines)
 * [Code examples](#code-examples)
 
@@ -580,8 +581,6 @@ void resume(Object data) {
 
 Exception handlers can not be overloaded.
 
-TODO: there's an issue of handling `finally` blocks so that they may be executed by the controller no matter how the coroutine was completed. 
- 
 ### Continuing with exception
 
 When exceptions occur in asynchronous computations, they may be handled by the controller itself, or passed to the user code in the coroutine to be handled there (this depends on the design decision made by the library author).
@@ -656,6 +655,44 @@ private void doResume(Object data, Throwable exception) {
 
 Note that suspending in `finally` blocks will likely not be supported, at least in the nearest release.
  
+### Handling `finally` blocks 
+
+There's an issue of handling `finally` blocks so that they may be executed by the controller no matter how the coroutine was completed. Consider the following code:
+ 
+``` kotlin
+async {
+    try {
+        ...
+        try {
+            await(...) // suspension point
+        } finally {
+           foo()
+        }
+        ...
+    } finally {
+        bar()
+   }
+}
+```
+
+A controller should be able to abort the execution of a coroutine. In that case it needs to have an option of executing all `finally` blocks whose corresponding `try` sections have been entered, but that were not executed themselves yet.
+
+In the example above, at a suspension point inside the inner try, the controller must be able to execute both `finally` blocks: the one with `foo()` and the one with `bar()`. 
+     
+This can be implemented by emitting an extra method containing finally blocks and available through teh `Continuation` interface:
+
+```
+interface Continuation<P> {
+    ...
+    
+    fun executeFinallyBlocks()
+}
+```
+
+This method should rely on the `label` field to determine which `finally` blocks should be executed in the current state. Local variables used inside `finally` blocks whose `try` blocks contain suspension points, should be stored in fields.
+  
+See [this issue](https://github.com/Kotlin/kotlin-coroutines/issues/1) for discussion.   
+
 ## Type-checking coroutines 
 
 The type checker determines that a lambda is a body of coroutine when it's passed as an argument to a parameter marked with the `coroutine` modifier (see coroutine builder examples above). 
