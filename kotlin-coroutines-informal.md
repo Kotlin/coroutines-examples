@@ -211,7 +211,7 @@ val seq = generate {
 
 > Find the library code for `generate {}` [here](#a-builder-and-controller-for-yield)  
 
-This approach also allows to express `yieldAll(sequence)` as a library functions (as well as `generate {}` and `yeild()` are), which simplifies joining lazy sequences and allows for efficient implementation (a naïve one is quadratic in the depth of the joins).  
+This approach also allows to express `yieldAll(sequence)` as a library functions (as well as `generate {}` and `yield()` are), which simplifies joining lazy sequences and allows for efficient implementation (a naïve one is quadratic in the depth of the joins).  
 
 ### More use cases
  
