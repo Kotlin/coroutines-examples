@@ -4,7 +4,7 @@
 * **Author**: Andrey Breslav
 * **Contributors**: Vladimir Reshetnikov, Stanislav Erokhin, Ilya Ryzhenkov, Denis Zharkov
 * **Status**: Under consideration
-* **Prototype**: In progress
+* **Prototype**: In progress  
 
 ## Abstract
 
@@ -38,6 +38,7 @@ It is an explicit goal of this proposal to make it possible to utilize Kotlin co
   * [Library interfaces](#library-interfaces)
   * [Controller](#controller)
   * [Suspending functions](#suspending-functions)
+  * [Suspending extensions](#suspending-extensions)
   * [Result handlers](#result-handlers)
   * [Exception handlers](#exception-handlers)
   * [Continuing with exception](#continuing-with-exception)
@@ -517,14 +518,22 @@ NOTE: some may argue that it's better to make suspension points more visible at 
   some keyword or symbol: `#await(foo)` or `suspend await(foo)`, or something. These options are all open for discussion.  
 
 #### Suspending extensions
-As it stated before, top-level suspending extensions to controller are prohibited by default. To allow them a library author should annotate controller class with special annotation `kotlin.coroutines.AllowSuspendExtensions`:
+
+As stated before, top-level suspending extensions to controller are prohibited by default. To allow them, a library author should annotate the controller class with `kotlin.coroutines.AllowSuspendExtensions` annotation:
+
 ```kotlin
 @AllowSuspendExtensions
 class FutureController<T> { ... }
+```
 
-fun <T> FutureController<T>.downloadUrl(url: Url, next: Continuation<Result>) = 
+Only then, extensions like the one below become allowed:
+
+``` kotlin
+suspend fun <T> FutureController<T>.downloadUrl(url: Url, next: Continuation<Result>) = 
      this.await(downloadFuture(url), next)
 ```
+
+The motivation for such a design is safety: in some cases adding suspending extensions that the controller is not aware about may break the contract of a coroutine. Example: adding a suspending extension to `generate` may result in the iterator being "stuck" without next value available for it, because teh code has been suspended by some extension that does not actually yield anything.  
  
 ### Result handlers
 
