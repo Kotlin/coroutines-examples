@@ -2,9 +2,9 @@
 
 * **Type**: Informal description
 * **Author**: Andrey Breslav
-* **Contributors**: Vladimir Reshetnikov, Stanislav Erokhin, Ilya Ryzhenkov
+* **Contributors**: Vladimir Reshetnikov, Stanislav Erokhin, Ilya Ryzhenkov, Denis Zharkov
 * **Status**: Under consideration
-* **Prototype**: not started  
+* **Prototype**: In progress
 
 ## Abstract
 
@@ -443,7 +443,7 @@ The purpose of the controller is to govern the semantics of the coroutine. A con
 - handlers for coroutine return values,
 - exception handlers for exceptions thrown inside the coroutine.
 
-Typically, all suspending functions and handlers will be members of the controller. We may need to allow extensions to the controller as suspending functions, but this should be through an opt-in mechanism, because many implementations would break if any unanticipated suspension points occur in a coroutine (for example, if an `async()` call happens unexpectedly among `yield()` calls in a basic generator, iteration will end up stuck leading to undesired behavior).
+Typically, all suspending functions and handlers will be members of the controller. We allow extensions to the controller as suspending functions, but this should be through an opt-in mechanism, because many implementations would break if any unanticipated suspension points occur in a coroutine (for example, if an `async()` call happens unexpectedly among `yield()` calls in a basic generator, iteration will end up stuck leading to undesired behavior).
 
 It is a language rule that suspending functions (and probably other specially designated members of the controller) are available in the body of a coroutine without qualification. In this sense, a controller acts similarly to an [implicit receiver](https://kotlinlang.org/docs/reference/extensions.html#declaring-extensions-as-members), only it exposes only some rather than all of its members.      
 
@@ -514,8 +514,18 @@ So, a suspension point is a function call with an implicit continuation paramete
 Note that the library has full control over which thread the continuation is resumed at and what parameter is passed to it. It may even continue the execution of the coroutine synchronously by immediately calling `resume()` on the same thread. 
     
 NOTE: some may argue that it's better to make suspension points more visible at the call sites, e.g. prefix them with
-  some keyword or symbol: `#await(foo)` or `suspend await(foo)`, or something. These options are all open for discussion.   
-  
+  some keyword or symbol: `#await(foo)` or `suspend await(foo)`, or something. These options are all open for discussion.  
+
+#### Suspending extensions
+As it stated before, top-level suspending extensions to controller are prohibited by default. To allow them a library author should annotate controller class with special annotation `kotlin.coroutines.AllowSuspendExtensions`:
+```kotlin
+@AllowSuspendExtensions
+class FutureController<T> { ... }
+
+fun <T> FutureController<T>.downloadUrl(url: Url, next: Continuation<Result>) = 
+     this.await(downloadFuture(url), next)
+```
+ 
 ### Result handlers
 
 A coroutine body looks like a regular lambda in the code and, like a lambda, it may have parameters and return a value. Handling parameters is covered above, and returned values are passed to a designated function (or functions) in the controller:
