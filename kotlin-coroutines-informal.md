@@ -392,13 +392,9 @@ To summarize:
         
 ### Library interfaces
 
-Here's the minimal version of the core library interfaces related to coroutines (there will likely be extra members to handle advanced use cases such as restrating the coroutine from the beginning or serializing its state):
+Here's the minimal version of the core library interface `Continuation` (there will likely be extra members to handle advanced use cases such as restrating the coroutine from the beginning or serializing its state):
 
 ``` kotlin
-interface Coroutine<C> {
-   fun entryPoint(controller: C): Continuation<Unit>
-}
-
 interface Continuation<P> {
    fun resume(data: P)
    fun resumeWithException(exception: Throwable)
@@ -410,16 +406,13 @@ interface Continuation<P> {
 So, a typical coroutine builder would look like this:
  
 ``` kotlin
-fun <T> async(coroutine c: () -> Coroutine<FutureController<T>>): Future<T> { 
-    // get an instance of the coroutine
-    val coroutine = c() 
-    
+fun <T> async(coroutine c: FutureController<T>.() -> Continuation<Unit>): Future<T> { 
     // controllers will be discussed below
     val controller = FutureController<T>()
      
-    // to start the execution of the coroutine, obtain its fist continuation
-    // it does not take any parameters, so we pass Unit there
-    val firstContinuation = coroutine.entryPoint(controller)
+    // to start the execution of the coroutine, obtain its fist continuation by calling `c()` on the controller
+    val firstContinuation = controller.c()
+    // run the continuation, it does not take any parameters, so we pass Unit there
     firstContinuation.resume(Unit)
     
     // return the Future object that is created internally by the controller
@@ -429,13 +422,13 @@ fun <T> async(coroutine c: () -> Coroutine<FutureController<T>>): Future<T> {
  
 > Find a working example [here](examples/async.kt#L30)  
 
-The `c` parameter normally receives a lambda, and its `coroutine` modifier indicates that this lambda is a coroutine, so its body has to be translated into a state machine. Note that such a lambda may have parameters which can be naturally expressed as `(Foo, Bar) -> Coroutine<...>`.  
+The `c` parameter normally receives a lambda, and its `coroutine` modifier indicates that this lambda is a coroutine, so its body has to be translated into a state machine. Note that such a lambda may have parameters which can be naturally expressed as `(Foo, Bar) -> Continuation<...>`.
   
-The usual workflow of a builder is to first pass the user-defined parameters to the coroutine. In our example there're no parameters, and this amounts to calling `c()` which returns a `Coroutine` instance. Then, we create a controller and pass it to the `entryPoint()` method of a the `Coroutine`, to obtain the first `Continuation` object whose `resume()` starts the execution of the coroutine. (Passing `Unit` to `resume()` may look weird, but it will be explained below.)    
+The continuation returned by `c()` represents the portion of a coroutine that goes before the first suspension point. In other words, it's the beginning of the coroutine. To run it, we call it's `resume()`. (Passing `Unit` to `resume()` may look weird, but it will be explained below.)  
+  
+NOTE: Technically, one could implement the `Continuation` interface and pass a lambda returning that custom implementation to `async`. 
 
-NOTE: Technically, one could implement the `Coroutine` interface and pass a lambda returning that custom implementation to `async`. 
-
-NOTE: To allocate fewer objects, we can make the state machine itself implement `Continuation`, so that its `resume` is the main method of the state machine. In fact, the initial lambda passed to the coroutine builder, `() -> Coroutine<...>` can be also implemented by the same state machine object. Sometimes the lambda and the `entryPoint()` function may be called more than once and with different arguments yielding multiple instances of the same coroutine. To support this case, we can teach the sole lambda-coroutine-continuation object to clone itself.   
+NOTE: To allocate fewer objects, we can make the state machine itself implement `Continuation`, so that its `resume` is the main method of the state machine. In fact, the initial lambda passed to the coroutine builder, `() -> Continuation<...>` can be also implemented by the same state machine object. Sometimes the lambda may be called more than once and with different arguments yielding multiple instances of the same coroutine. To support this case, we can teach the sole lambda-continuation object to clone itself.   
 
 ### Controller
 
@@ -446,7 +439,10 @@ The purpose of the controller is to govern the semantics of the coroutine. A con
 
 Typically, all suspending functions and handlers will be members of the controller. We allow extensions to the controller as suspending functions, but this should be through an opt-in mechanism, because many implementations would break if any unanticipated suspension points occur in a coroutine (for example, if an `async()` call happens unexpectedly among `yield()` calls in a basic generator, iteration will end up stuck leading to undesired behavior).
 
-It is a language rule that suspending functions (and probably other specially designated members of the controller) are available in the body of a coroutine without qualification. In this sense, a controller acts similarly to an [implicit receiver](https://kotlinlang.org/docs/reference/extensions.html#declaring-extensions-as-members), only it exposes only some rather than all of its members.      
+Controller is provided as a [receiver](https://kotlinlang.org/docs/reference/extensions.html#declaring-extensions-as-members) of the coroutine lambda, and thus its members are available without qualification in the coroutine body. 
+
+> Maybe we should restrict the set of controller's members that are visible in the coroutine body. the rationale would be that most of the time only suspension functions are relevant to clients, but making everything else private maybe undesirable, because other parts of the program may want to interact with the controller in a meaningful way.  
+> On top of that, `hashCode()` and `equals()` of controller are also unwelcome in the body of the coroutine.
 
 ### Suspending functions
 
@@ -718,11 +714,13 @@ The type checker determines that a lambda is a body of coroutine when it's passe
 
 The following rules apply:
 * only function and constructor parameters may be marked with the `coroutine` modifier,
-* a parameter so marked must have a function type with arbitrary number of parameters declared (including extension function types),
-* the return type of such a function type must be `Coroutine<...>` where the type-argument is called a _controller types_,
-* the controller type may be any type at all.
+* a parameter so marked must have an extension-function type with arbitrary number of parameters declared, and have a receiver type (which indicates a controller),
+* the controller type may be any type at all,
+* the return type of such a function type must be `Continuation<Unit>`,
 
-In the body of a coroutine, member functions of the controller that are marked with the `suspend` modifier may be called without qualification and without passing the continuation parameter explicitly. The controller itself is not accessible through `this`. (We may allow other kinds of functions on controller to be called without qualification.)
+In the body of a coroutine, member functions of the controller that are marked with the `suspend` modifier may be called without qualification and without passing the continuation parameter explicitly. 
+
+> We should probably make the controller itself inaccessible through `this`, but this is up to discussion. (We may allow other kinds of functions on controller to be called without qualification with a declaration-site opt-in mechanism.)
    
 A function may be marked as `suspend` (and thus be a _suspending function_) if 
 * it has at least one parameter, 
@@ -731,9 +729,9 @@ A function may be marked as `suspend` (and thus be a _suspending function_) if
 
 > NOTE: the parameter before last can still be `vararg`
 
-Suspending functions can not be called from noinline and crossiniline lambdas or locals classes, or anonymous objects in the body of the coroutine. Essentially, they can only be called from the same places where a `return` expression may occur for the coroutine.
+Suspending functions can not be called from noinline and crossiniline lambdas, or local classes, or anonymous objects in the body of the coroutine. Essentially, they can only be called from the same places where a `return` expression may occur for the coroutine.
       
-Suspending function can not be called from `finally` blocks (this limitation may be lifted later).
+Suspending functions can not be called from `finally` blocks (this limitation may be lifted later).
       
 A suspending call is type-checked assuming that the there's an argument implicitly supplied for the continuation parameter, and it is an expression of type `Continuation<R>`. `R` is also considered the return type for such a call, and the actual type for type-variable `R` is determined through type inference, including the expected type constraints.
 
@@ -750,9 +748,9 @@ See this directory for complete samples: [kotlin-coroutines/examples](examples).
 ``` kotlin
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> async(coroutine c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> {
+fun <T> async(coroutine c: FutureController<T>.() -> Continuation<Unit>): CompletableFuture<T> {
     val controller = FutureController<T>()
-    c().entryPoint(controller).resume(Unit)
+    controller.c().resume(Unit)
     return controller.future
 }
 
@@ -785,10 +783,10 @@ class FutureController<T> {
 ``` kotlin
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> generate(coroutine c: () -> Coroutine<GeneratorController<T>>): Sequence<T> = object : Sequence<T> {
+fun <T> generate(coroutine c: GeneratorController<T>.() -> Coroutine<Unit>): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorController<T>()
-        iterator.setNextStep(c().entryPoint(iterator))
+        iterator.setNextStep(iterator.c())
         return iterator
     }
 }
@@ -826,9 +824,9 @@ This makes use of the [`AbstractIterator`](https://kotlinlang.org/api/latest/jvm
 ``` kotlin
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> asyncIO(coroutine c: () -> Coroutine<AsyncIOController<T>>): CompletableFuture<T> {
+fun <T> asyncIO(coroutine c: AsyncIOController<T>.() -> Coroutine<Unit>): CompletableFuture<T> {
     val controller = AsyncIOController<T>()
-    c().entryPoint(controller).resume(Unit)
+    controller.c().resume(Unit)
     return controller.future
 }
 

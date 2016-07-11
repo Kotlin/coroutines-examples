@@ -1,7 +1,9 @@
 package `yield`
 
-import coroutines.api.*
-import coroutines.annotations.*
+import coroutines.annotations.coroutine
+import coroutines.annotations.operator
+import coroutines.annotations.suspend
+import coroutines.api.Continuation
 
 // TEST CODE
 
@@ -15,7 +17,7 @@ fun main(args: Array<String>) {
         println("done")
     }
 */
-    fun gen() = generate({__anonymous__()})
+    fun gen() = generate<Int>({__anonymous__(this)})
 
     println(gen().joinToString())
 
@@ -26,10 +28,10 @@ fun main(args: Array<String>) {
 // LIBRARY CODE
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> generate(@coroutine c: () -> Coroutine<GeneratorController<T>>): Sequence<T> = object : Sequence<T> {
+fun <T> generate(@coroutine c: GeneratorController<T>.() -> Continuation<Unit>): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorController<T>()
-        iterator.setNextStep(c().entryPoint(iterator))
+        iterator.setNextStep(iterator.c())
         return iterator
     }
 }
@@ -58,13 +60,7 @@ class GeneratorController<T>() : AbstractIterator<T>() {
 
 // GENERATED CODE
 
-class __anonymous__() : Coroutine<GeneratorController<Int>>, Continuation<Any?> {
-    private lateinit var controller: GeneratorController<Int>
-
-    override fun entryPoint(controller: GeneratorController<Int>): Continuation<Unit> {
-        this.controller = controller
-        return this as Continuation<Unit>
-    }
+class __anonymous__(val controller: GeneratorController<Int>) : Continuation<Any?> {
 
     override fun resume(data: Any?) = doResume(data, null)
     override fun resumeWithException(exception: Throwable) = doResume(null, exception)

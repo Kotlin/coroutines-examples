@@ -4,7 +4,6 @@ import coroutines.annotations.coroutine
 import coroutines.annotations.operator
 import coroutines.annotations.suspend
 import coroutines.api.Continuation
-import coroutines.api.Coroutine
 
 // TEST CODE
 
@@ -28,10 +27,10 @@ fun main(args: Array<String>) {
 
 // LIBRARY CODE
 
-fun <T> generate(@coroutine c: () -> Coroutine<GeneratorController<T>>): Sequence<T> = object : Sequence<T> {
+fun <T> generate(@coroutine c: GeneratorController<T>.() -> Continuation<Unit>): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorController<T>()
-        iterator.setNextStep(c().entryPoint(iterator))
+        iterator.setNextStep(iterator.c())
         return iterator
     }
 }
@@ -74,9 +73,7 @@ class GeneratorController<T>() : AbstractIterator<T>() {
         println("done")
     }
  */
-class __anonymous__() : Coroutine<GeneratorController<Int>>,
-        Continuation<Any?>,
-        Function0<Coroutine<GeneratorController<Int>>> {
+class __anonymous__() : Continuation<Any?>, Function1<GeneratorController<Int>, Continuation<Unit>> {
 
     override fun resume(data: Any?) = doResume(data, null)
 
@@ -116,8 +113,8 @@ class __anonymous__() : Coroutine<GeneratorController<Int>>,
     private var _controller: GeneratorController<Int>? = null
 
     private fun thisOrNew(): __anonymous__ = if (_controller == null) this else __anonymous__()
-    override fun invoke(): Coroutine<GeneratorController<Int>> = thisOrNew()
-    override fun entryPoint(controller: GeneratorController<Int>): Continuation<Unit> {
+
+    override fun invoke(controller: GeneratorController<Int>): Continuation<Unit> {
         return thisOrNew().apply {
             _controller = controller
         }

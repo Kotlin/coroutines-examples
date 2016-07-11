@@ -4,7 +4,6 @@ import coroutines.annotations.coroutine
 import coroutines.annotations.operator
 import coroutines.annotations.suspend
 import coroutines.api.Continuation
-import coroutines.api.Coroutine
 import java.util.concurrent.CompletableFuture
 
 // TEST CODE
@@ -33,8 +32,8 @@ fun main(args: Array<String>) {
 
 // LIBRARY CODE
 
-fun <T> async(@coroutine c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> = FutureController<T>().apply {
-    c().entryPoint(this).resume(Unit)
+fun <T> async(@coroutine c: FutureController<T>.() -> Continuation<Unit>): CompletableFuture<T> = FutureController<T>().apply {
+    this.c().resume(Unit)
 }
 
 /*
@@ -59,9 +58,8 @@ class FutureController<T> : CompletableFuture<T>() {
     }
 }
 
-class __anonymous__() : Coroutine<FutureController<String>>,
-        Continuation<Any?>,
-        Function0<Coroutine<FutureController<String>>> {
+class __anonymous__() : Continuation<Any?>,
+                        Function1<FutureController<String>, Continuation<Unit>> {
 
     @Volatile
     private var _controller: FutureController<String>? = null
@@ -70,9 +68,7 @@ class __anonymous__() : Coroutine<FutureController<String>>,
         get() = _controller ?: throw UnsupportedOperationException("Coroutine $this should be initialized before use")
 
     private fun thisOrNew() = if (_controller == null) this else __anonymous__()
-    override fun invoke(): Coroutine<FutureController<String>> = thisOrNew()
-
-    override fun entryPoint(controller: FutureController<String>): Continuation<Unit> {
+    override fun invoke(controller: FutureController<String>): Continuation<Unit> {
         return thisOrNew().apply {
             _controller = controller
         }

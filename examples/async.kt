@@ -4,7 +4,6 @@ import coroutines.annotations.coroutine
 import coroutines.annotations.operator
 import coroutines.annotations.suspend
 import coroutines.api.Continuation
-import coroutines.api.Coroutine
 import java.util.concurrent.CompletableFuture
 
 // TEST CODE
@@ -23,7 +22,7 @@ fun main(args: Array<String>) {
         y
     }
 */
-    val future = async({ __anonymous__() })
+    val future = async<String>({ __anonymous__(this) })
 
     future.whenComplete { value, t ->
         println("completed with $value")
@@ -34,9 +33,9 @@ fun main(args: Array<String>) {
 // LIBRARY CODE
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> async(@coroutine c: () -> Coroutine<FutureController<T>>): CompletableFuture<T> {
+fun <T> async(@coroutine c: FutureController<T>.() -> Continuation<Unit>): CompletableFuture<T> {
     val controller = FutureController<T>()
-    c().entryPoint(controller).resume(Unit)
+    controller.c().resume(Unit)
     return controller.future
 }
 
@@ -63,14 +62,7 @@ class FutureController<T> {
 
 // GENERATED CODE
 
-class __anonymous__() : Coroutine<FutureController<String>>, Continuation<Any?> {
-
-    private lateinit var controller: FutureController<String>
-
-    override fun entryPoint(controller: FutureController<String>): Continuation<Unit> {
-        this.controller = controller
-        return this as Continuation<Unit>
-    }
+class __anonymous__(val controller: FutureController<String>) : Continuation<Any?> {
 
     override fun resume(data: Any?) = doResume(data, null)
     override fun resumeWithException(exception: Throwable) = doResume(null, exception)

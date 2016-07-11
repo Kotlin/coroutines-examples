@@ -4,7 +4,6 @@ import coroutines.annotations.coroutine
 import coroutines.annotations.operator
 import coroutines.annotations.suspend
 import coroutines.api.Continuation
-import coroutines.api.Coroutine
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
@@ -47,7 +46,7 @@ private fun withAsync(buf: ByteBuffer, input: AsynchronousFileChannel, output: A
             bytesWritten
         }
     */
-    val future = asyncIO { __anonymous__(input, output, buf) }
+    val future = asyncIO<Int> { __anonymous__(this, input, output, buf) }
 
     println("Waiting for completion")
 
@@ -100,9 +99,9 @@ private fun noAsync(buf: ByteBuffer, input: AsynchronousFileChannel, output: Asy
 // LIBRARY CODE
 // Note: this code is optimized for readability, the actual implementation would create fewer objects
 
-fun <T> asyncIO(@coroutine c: () -> Coroutine<AsyncIOController<T>>): CompletableFuture<T> {
+fun <T> asyncIO(@coroutine c: AsyncIOController<T>.() -> Continuation<Unit>): CompletableFuture<T> {
     val controller = AsyncIOController<T>()
-    c().entryPoint(controller).resume(Unit)
+    controller.c().resume(Unit)
     return controller.future
 }
 
@@ -139,17 +138,11 @@ class AsyncIOController<T> {
 // GENERATED CODE
 
 class __anonymous__(
+        val controller: AsyncIOController<Int>,
         val input: AsynchronousFileChannel,
         val output: AsynchronousFileChannel,
         val buf: ByteBuffer
-) : Coroutine<AsyncIOController<Int>>, Continuation<Any?> {
-
-    private lateinit var controller: AsyncIOController<Int>
-
-    override fun entryPoint(controller: AsyncIOController<Int>): Continuation<Unit> {
-        this.controller = controller
-        return this as Continuation<Unit>
-    }
+) : Continuation<Any?> {
 
     override fun resume(data: Any?) = doResume(data, null)
     override fun resumeWithException(exception: Throwable) = doResume(null, exception)

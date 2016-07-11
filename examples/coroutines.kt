@@ -1,14 +1,6 @@
 package coroutines.api
 
 /**
- * Interface representing a coroutine, call the `entryPoint()` function to set a controller
- * and retrieve the starting continuation
- */
-interface Coroutine<in C> {
-    fun entryPoint(controller: C): Continuation<Unit>
-}
-
-/**
  * Interface representing a continuation after a suspension point that returns value of type `P`
  */
 interface Continuation<in P> {
