@@ -694,7 +694,7 @@ A controller should be able to abort the execution of a coroutine. In that case 
 
 In the example above, at a suspension point inside the inner try, the controller must be able to execute both `finally` blocks: the one with `foo()` and the one with `bar()`. 
      
-This can be implemented by emitting an extra method containing finally blocks and available through teh `Continuation` interface:
+This can be implemented by emitting an extra method containing finally blocks and available through the `Continuation` interface:
 
 ```
 interface Continuation<P> {
