@@ -5,6 +5,7 @@ In this repository, we are working on the design for supporting coroutines in [K
 ## Navigate
 
 * [Informal description of the current proposal](kotlin-coroutines-informal.md)
+  * [Introductory video: Coroutines in Kotlin](https://www.youtube.com/watch?v=4W3ruTWUhpw) (Andrey Breslav at JVMLS 2016)
 * [Example code](examples) illustrating what coroutines are compiled to (this repo can be cloned and opened as a project in IntelliJ IDEA)
 * [Example coroutine-based libraries](https://github.com/Kotlin/kotlinx.coroutines) (async, generate, rx.Observable)
 * [Issues](https://github.com/JetBrains/kotlin-coroutines/issues)
