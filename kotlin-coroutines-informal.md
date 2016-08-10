@@ -671,7 +671,7 @@ private void doResume(Object data, Throwable exception) {
 }  
 ```
 
-Note that suspending in `finally` blocks will likely not be supported, at least in the nearest release.
+Note that suspending in `finally` blocks may not be supported, at least in the nearest release (see [this issue](https://github.com/Kotlin/kotlin-coroutines/issues/9)).
  
 ### Handling `finally` blocks 
 
