@@ -599,6 +599,8 @@ void resume(Object data) {
 
 Exception handlers can not be overloaded.
 
+Note: Both result and exception handlers can only be a member of a controller, but not an extension to the latter.
+
 ### Continuing with exception
 
 When exceptions occur in asynchronous computations, they may be handled by the controller itself, or passed to the user code in the coroutine to be handled there (this depends on the design decision made by the library author).
