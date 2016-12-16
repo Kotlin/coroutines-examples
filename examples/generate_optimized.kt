@@ -1,17 +1,20 @@
+package generate_optimized
+
+import generate.Generator
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineIntrinsics
 import kotlin.coroutines.createCoroutine
 
-fun <T> generateOptimized(block: suspend Generator<T>.() -> Unit): Sequence<T> = object : Sequence<T> {
+fun <T> generate(block: suspend Generator<T>.() -> Unit): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
-        val iterator = GeneratorIteratorOptimized<T>()
+        val iterator = GeneratorIterator<T>()
         val initial = block.createCoroutine(receiver = iterator, completion = iterator)
         iterator.setNextStep(initial)
         return iterator
     }
 }
 
-class GeneratorIteratorOptimized<T>: AbstractIterator<T>(), Generator<T>, Continuation<Unit> {
+class GeneratorIterator<T>: AbstractIterator<T>(), Generator<T>, Continuation<Unit> {
     private lateinit var nextStep: Continuation<Unit>
 
     fun setNextStep(step: Continuation<Unit>) { this.nextStep = step }

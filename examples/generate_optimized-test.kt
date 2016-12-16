@@ -1,5 +1,6 @@
+import generate_optimized.generate
 
-val fibonacciOptimized: Sequence<Int> = generateOptimized {
+val fibonacciOptimized: Sequence<Int> = generate {
     yield(1) // first Fibonacci number
     var cur = 1
     var next = 1

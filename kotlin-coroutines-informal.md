@@ -640,7 +640,7 @@ class GeneratorIterator<T>: AbstractIterator<T>(), Generator<T>, Continuation<Un
 
 ```
  
- > You can get this code [here](examples/yield.kt)  
+ > You can get this code [here](examples/generate.kt)  
  
 The implementation of `yield` uses `suspendCoroutine` [suspending function](#suspending-functions) to suspend
 the coroutine and capture its continuation. Continuation is stored as `nextStep` to be resumed when the 
@@ -985,6 +985,6 @@ Because `yield` always suspends, the corresponding block always returns `Corouti
      }
 ```
 
-> You can get full code [here](examples/yield-optimized.kt)  
+> You can get full code [here](examples/generate_optimized.kt)  
  
 

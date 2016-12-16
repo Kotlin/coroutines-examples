@@ -1,3 +1,4 @@
+import generate.generate
 
 val fibonacci: Sequence<Int> = generate {
     yield(1) // first Fibonacci number
