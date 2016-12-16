@@ -11,12 +11,12 @@ This is a description of coroutines in Kotlin. This concept is also known as, or
 
 - generators/yield
 - async/await
-- сontinuations
+- composable сontinuations
 
 Goals:
 
 - No dependency on a particular implementation of Futures or other such rich library;
-- Cover equally the "async/await" use case and "generator blocks".
+- Cover equally the "async/await" use case and "generator blocks";
 - Make it possible to utilize Kotlin coroutines as wrappers for different existing asynchronous APIs 
   (such as Java NIO, different implementations of Futures, etc).
 
@@ -33,9 +33,11 @@ Goals:
   * [Continuation interface](#continuation-interface)
   * [Suspending functions](#suspending-functions)
   * [Coroutine builders](#coroutine-builders)
-  * [Wrapping callbacks](#wrapping-callbacks)
   * [Dispatcher](#dispatcher)
   * [Restricted suspension](#restricted-suspension)
+* [More examples](#more-examples)
+  * [Wrapping callbacks](#wrapping-callbacks)
+  * [Cooperative single-thread multitasking](#cooperative-single-thread-multitasking)
 * [Implementation details](#implementation-details)
   * [Continuation passing style](#continuation-passing-style)
   * [State machines](#state-machines)
@@ -298,8 +300,8 @@ Coroutines can cover many more use cases, including these:
 
 ## Coroutines overview
 
-This section gives a bird's-eye view of the proposed language mechanisms that enable writing coroutines and 
-libraries that govern their semantics.  
+This section gives an overview of the language mechanisms that enable writing coroutines and 
+the standard libraries that govern their semantics.  
 
 ### Terminology
 
@@ -489,44 +491,6 @@ it is up to the code of the corresponding suspending function to define when and
 The completion of coroutine invokes _completion continuation_. Its `resume` or `resumeWithException`
 functions are invoked when coroutine _completes_ with the result or exception correspondingly.
 
-### Wrapping callbacks
-
-Many asynchronous APIs have callback-style interfaces. The `suspendCoroutine` suspending function 
-from the standard library provides for
-an easy way to wrap any callback into a Kotlin suspending function. For example,
-`File.aRead()` function from [asynchronous computations](#asynchronous-computations) use case 
-can be implemented as suspending function on top of Java NIO 
-[`AsynchronousFileChannel`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html)
-and its 
-[`CompletionHandler`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/CompletionHandler.html)
-callback interface with the following code:
-
-
-``` kotlin
-suspend fun File.aRead(): ByteArray {
-    val channel = AsynchronousFileChannel.open(toPath());
-    val tentativeSize = channel.size()
-    if (tentativeSize > Int.MAX_VALUE) throw IOException("File is too large to read into byte array")
-    val buffer = ByteBuffer.allocate(tentativeSize.toInt())
-    return suspendCoroutine { c ->
-        channel.read(buffer, 0L, Unit, object : CompletionHandler<Int, Unit> {
-            override fun completed(bytesRead: Int, attachment: Unit) {
-                val n = bytesRead.coerceAtLeast(0)
-                val bytes = if (n == buffer.capacity()) buffer.array() 
-                    else buffer.array().copyOf(n)
-                c.resume(bytes)
-            }
-
-            override fun failed(exception: Throwable, attachment: Unit) {
-                c.resumeWithException(exception)
-            }
-        })
-    }
-}
-```
-
-> You can get this code [here](examples/io.kt)  
-
 ### Dispatcher
 
 Let's recap [asynchronous UI](#asynchronous-ui) use case. Asynchronous UI applications must ensure that the 
@@ -704,6 +668,120 @@ general suspending function. To suspend the execution of coroutine they must ult
  `Generator.yield`. The implementation of `yield` itself is a member function of `GeneratorIterator`
 and it does not have any restrictions, because only suspending extension lambdas and functions are restricted.
 
+## More examples
+
+This is a non-normative section that does not introduce any new language constructs or 
+library functions, but shows how all the building blocks compose to cover a large variety
+of use-cases.
+
+### Wrapping callbacks
+
+Many asynchronous APIs have callback-style interfaces. The `suspendCoroutine` suspending function 
+from the standard library provides for
+an easy way to wrap any callback into a Kotlin suspending function. For example,
+`File.aRead()` function from [asynchronous computations](#asynchronous-computations) use case 
+can be implemented as suspending function on top of Java NIO 
+[`AsynchronousFileChannel`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html)
+and its 
+[`CompletionHandler`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/CompletionHandler.html)
+callback interface with the following code:
+
+
+``` kotlin
+suspend fun File.aRead(): ByteArray {
+    val channel = AsynchronousFileChannel.open(toPath());
+    val tentativeSize = channel.size()
+    if (tentativeSize > Int.MAX_VALUE) throw IOException("File is too large to read into byte array")
+    val buffer = ByteBuffer.allocate(tentativeSize.toInt())
+    return suspendCoroutine { c ->
+        channel.read(buffer, 0L, Unit, object : CompletionHandler<Int, Unit> {
+            override fun completed(bytesRead: Int, attachment: Unit) {
+                val n = bytesRead.coerceAtLeast(0)
+                val bytes = if (n == buffer.capacity()) buffer.array() 
+                    else buffer.array().copyOf(n)
+                c.resume(bytes)
+            }
+
+            override fun failed(exception: Throwable, attachment: Unit) {
+                c.resumeWithException(exception)
+            }
+        })
+    }
+}
+```
+
+> You can get this code [here](examples/io.kt)  
+
+### Cooperative single-thread multitasking
+
+It is very convenient to write cooperative single-threaded applications, because you don't have to 
+deal with concurrency and shared mutable state. JS, Python and many other languages do 
+not have threads, but have cooperative multitasking primitives.
+
+Let's implement `asyncThread{}` coroutine builder that is similar to a 
+[`thread{}`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.concurrent/thread.html)
+from the standard library. However, instead of a regular functional block to execute in
+the new thread, it takes a suspending lambda block. It allows to run multiple
+asynchronous tasks, sleep, wait, etc, all cooperatively from a single thread,
+e.g. the goal is to automagically make the following code work in a single thread, despite the 
+fact that it has two asynchronous tasks inside that are both active.
+
+
+``` kotlin
+asyncThread("MyEventThread") {
+    log("Hello, world!")
+    val f1 = async {
+        log("f1 is sleeping")
+        sleep(1000) // sleep 1s
+        log("f1 returns 1")
+        1
+    }
+    val f2 = async {
+        log("f2 is sleeping")
+        sleep(1000) // sleep 1s
+        log("f2 returns 2")
+        2
+    }
+    log("I'll wait for both f1 and f2. It should take just a second!")
+    val sum = await(f1) + await(f2)
+    log("And the sum is $sum")
+}
+```
+
+Let us start by defining a scope class for cooperative multitasking. The minimal version might
+look like this:
+
+``` kotlin
+interface AsyncThreadScope {
+    fun <T> async(block: suspend AsyncThreadScope.() -> T): CompletableFuture<T>
+    suspend fun sleep(time: Long)
+}
+```
+
+This scope interface defines `async` and `sleep` to start sub-tasks in the same thread 
+and to efficiently sleep in a cooperative way. 
+The `@RestrictsSuspendExtensions` annotation on the scope interface is _not_ needed.
+We'll have _composability_ with arbitrary 3-rd party suspending functions, 
+like asynchronous IO as shown in [wrapping callbacks](#wrapping-callbacks) section,
+ with `await` suspending function as shown in [suspending functions](#suspending-functions) section, etc.
+ 
+In order to dispatch all suspensions inside the `asyncThread{}` coroutine into the thread, 
+dispatcher is installed in a coroutine as explained in the [dispatcher](#dispatcher) section:
+
+
+``` kotlin
+fun <T> asyncThread(name: String, block: suspend AsyncThreadScope.() -> T): CompletableFuture<T> {
+    val scope = AsyncThreadScopeImpl<T>(name)
+    block.startCoroutine(receiver = scope, completion = scope, dispatcher = scope)
+    scope.thread.start()
+    return scope.completionFuture
+}
+```
+
+> You can get full code [here](examples/async-thead.kt)  
+
+Implementation of the `AsyncThreadScopeImpl` itself becomes just a technicality.
+  
 ## Implementation details
 
 This section provides a glimpse into implementation details of coroutines. They are hidden

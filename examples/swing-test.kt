@@ -1,8 +1,6 @@
 import java.util.concurrent.ForkJoinPool
 import kotlin.coroutines.suspendCoroutine
 
-fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
-
 suspend fun makeRequest(): String {
     log("Making request...")
     return suspendCoroutine { c ->
