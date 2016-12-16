@@ -4,7 +4,7 @@ import kotlin.coroutines.startCoroutine
 
 fun <T> async(block: suspend () -> T): CompletableFuture<T> {
     val future = CompletableFuture<T>()
-    block.startCoroutine(completion=object : Continuation<T> {
+    block.startCoroutine(completion = object : Continuation<T> {
         override fun resume(value: T) {
             future.complete(value)
         }

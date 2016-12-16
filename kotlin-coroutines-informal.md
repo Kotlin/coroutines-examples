@@ -453,7 +453,7 @@ to start coroutine execution from a regular non-suspending scope. Here is the im
 ``` kotlin
 fun <T> async(block: suspend () -> T): CompletableFuture<T> {
     val future = CompletableFuture<T>()
-    block.startCoroutine(completion=object : Continuation<T> {
+    block.startCoroutine(completion = object : Continuation<T> {
         override fun resume(value: T) { 
             future.complete(value) 
         }
@@ -595,14 +595,14 @@ interface ContinuationDispatcher {
  ``` kotlin
  fun <T> asyncSwing(block: suspend () -> T): CompletableFuture<T> {
      val future = CompletableFuture<T>()
-     block.startCoroutine(completion=object : Continuation<T> {
+     block.startCoroutine(completion = object : Continuation<T> {
          override fun resume(value: T) { 
              future.complete(value) 
          }
          override fun resumeWithException(exception: Throwable) { 
              future.completeExceptionally(exception) 
          }
-     }, dispatcher=SwingDispatcher) // Note the dispatcher parameter to startCoroutine
+     }, dispatcher = SwingDispatcher) // Note the dispatcher parameter to startCoroutine
      return future
  }
 
@@ -628,7 +628,7 @@ from [generators](#generators) use case. Here is the library code for `generate{
 fun <T> generate(block: suspend Generator<T>.() -> Unit): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorIterator<T>()
-        val initial = block.createCoroutine(receiver=iterator, completion=iterator)
+        val initial = block.createCoroutine(receiver = iterator, completion = iterator)
         iterator.setNextStep(initial)
         return iterator
     }
@@ -890,7 +890,7 @@ and direct access to [state machine](#state-machines) implementation of coroutin
 better performance as a result. This convention is usually easy to follow for `generate`/`yield`-like coroutines, but attempts to 
 write asynchronous `await`-like suspending functions on top of `suspendCoroutineOrReturn` are **discouraged**
 as they are **extremely tricky** to implement correctly without the help of `suspendCoroutine` and errors in these
-implementation attempts are typically of [heisenbugs](https://en.wikipedia.org/wiki/Heisenbug)
+implementation attempts are typically [heisenbugs](https://en.wikipedia.org/wiki/Heisenbug)
 that defy attempts to find and reproduce them via tests. 
 
 Optimized version of `yield` via `CoroutineIntrinsics.suspendCoroutineOrReturn` is shown below.

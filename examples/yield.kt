@@ -11,7 +11,7 @@ interface Generator<T> {
 fun <T> generate(block: suspend Generator<T>.() -> Unit): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorIterator<T>()
-        val initial = block.createCoroutine(iterator, iterator)
+        val initial = block.createCoroutine(receiver = iterator, completion = iterator)
         iterator.setNextStep(initial)
         return iterator
     }
