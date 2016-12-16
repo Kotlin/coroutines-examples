@@ -778,7 +778,7 @@ fun <T> asyncThread(name: String, block: suspend AsyncThreadScope.() -> T): Comp
 }
 ```
 
-> You can get full code [here](examples/async-thead.kt)  
+> You can get full code [here](examples/async-thread.kt)  
 
 Implementation of the `AsyncThreadScopeImpl` itself becomes just a technicality.
   
