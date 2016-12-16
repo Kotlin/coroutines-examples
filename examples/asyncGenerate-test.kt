@@ -18,15 +18,19 @@ fun main(args: Array<String>) {
         val random = Random()
         // consume asynchronous sequence
         val it = seq.asyncIterator()
+        var consumedCounter = 0
         while (true) {
-            var consumerSleep = random.nextInt(500).toLong()
-            log("Consumer goes to sleep for $consumerSleep ms")
-            sleep(consumerSleep)
-            log("Consumer is checking hasNext()...")
-            val hasNext = it.hasNext()
-            log("Consumer got hasNext = $hasNext")
-            if (!hasNext) break
-            consumerSleep = random.nextInt(500).toLong()
+            // I'm feeling lucky the first 5 times; so I don't call hasNext, but do next() immediately (just testing)
+            if (consumedCounter++ >= 5) {
+                val consumerSleep = random.nextInt(500).toLong()
+                log("Consumer goes to sleep for $consumerSleep ms")
+                sleep(consumerSleep)
+                log("Consumer is checking hasNext()...")
+                val hasNext = it.hasNext()
+                log("Consumer got hasNext = $hasNext")
+                if (!hasNext) break
+            }
+            val consumerSleep = random.nextInt(500).toLong()
             log("Consumer goes to sleep for $consumerSleep ms")
             sleep(consumerSleep)
             log("Consumer is calling next()...")
