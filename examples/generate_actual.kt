@@ -16,14 +16,19 @@ public abstract class Generator<in T> internal constructor() {
     public abstract suspend fun yield(value: T)
 
     /**
+     * Yields potentially infinite sequence of iterator values in [generate] block.
+     */
+    public abstract suspend fun yieldAll(iterator: Iterator<T>)
+
+    /**
      * Yields a collections of values in [generate] block.
      */
-    public abstract suspend fun yieldAll(elements: Collection<T>)
+    public suspend fun yieldAll(elements: Iterable<T>) = yieldAll(elements.iterator())
 
     /**
      * Yields potentially infinite sequence of values in [generate] block.
      */
-    public abstract suspend fun yieldAll(sequence: Sequence<T>)
+    public suspend fun yieldAll(sequence: Sequence<T>) = yieldAll(sequence.iterator())
 }
 
 /**
@@ -46,9 +51,8 @@ private class GeneratorIterator<T>: Generator<T>(), Iterator<T>, Continuation<Un
         if (!computedNext) {
             val step = nextStep!!
             computedNext = true
-            nextStep == null
+            nextStep = null
             step.resume(Unit) // leaves it in "done" state if crashes
-            return nextStep != null
         }
         return nextStep != null
     }
@@ -77,11 +81,8 @@ private class GeneratorIterator<T>: Generator<T>(), Iterator<T>, Continuation<Un
         }
     }
 
-    suspend override fun yieldAll(elements: Collection<T>) = yieldAll(elements.iterator())
-    suspend override fun yieldAll(sequence: Sequence<T>) = yieldAll(sequence.iterator())
-
-    suspend fun yieldAll(iterator: Iterator<T>) {
-        if (!iterator.hasNext()) return // no values -- don't suspend
+    override suspend fun yieldAll(iterator: Iterator<T>) {
+//        if (!iterator.hasNext()) return // no values -- don't suspend
         nextValue = iterator.next()
         return CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
             nextStep = IteratorContinuation(c, iterator)

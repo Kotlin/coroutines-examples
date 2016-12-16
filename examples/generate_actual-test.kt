@@ -15,6 +15,7 @@ val fibonacci: Sequence<Int> = generate {
 val composite: Sequence<Int> = generate {
     yield(0)
     yieldAll(fibonacci.take(10))
+    yield(-1)
 }
 
 fun main(args: Array<String>) {
