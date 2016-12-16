@@ -16,20 +16,19 @@ fun main(args: Array<String>) {
         }
         // helper function
         val random = Random()
-//        suspend fun randomSleepConsumer() { // THIS IS A LOCAL SUSPEND FUNCTION. OMG! DOES IT EVEN WORK?
-//            val consumerSleep = random.nextInt(500).toLong()
-//            log("Consumer goes to sleep for $consumerSleep ms")
-//            return sleep(consumerSleep)
-//        }
         // consume asynchronous sequence
         val it = seq.asyncIterator()
         while (true) {
-            //randomSleepConsumer()
+            var consumerSleep = random.nextInt(500).toLong()
+            log("Consumer goes to sleep for $consumerSleep ms")
+            sleep(consumerSleep)
             log("Consumer is checking hasNext()...")
             val hasNext = it.hasNext()
             log("Consumer got hasNext = $hasNext")
             if (!hasNext) break
-            //randomSleepConsumer()
+            consumerSleep = random.nextInt(500).toLong()
+            log("Consumer goes to sleep for $consumerSleep ms")
+            sleep(consumerSleep)
             log("Consumer is calling next()...")
             val value = it.next()
             log("Consumer got value = $value")
