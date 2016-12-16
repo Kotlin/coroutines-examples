@@ -614,7 +614,7 @@ Its only difference from `async` builder is the additional argument to `startCor
 in the standard library in the following way:
 
 ``` kotlin
-fun <T> (suspend  () -> T).startCoroutine(
+fun <T> (suspend () -> T).startCoroutine(
     completion: Continuation<T>, 
     dispatcher: ContinuationDispatcher? = null)
 ```
