@@ -6,23 +6,20 @@ import kotlin.coroutines.createCoroutine
 import kotlin.coroutines.suspendCoroutine
 
 @RestrictsSuspendExtensions
-interface Generator<T> {
+interface Generator<in T> {
     suspend fun yield(value: T)
 }
 
 fun <T> generate(block: suspend Generator<T>.() -> Unit): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> {
         val iterator = GeneratorIterator<T>()
-        val initial = block.createCoroutine(receiver = iterator, completion = iterator)
-        iterator.setNextStep(initial)
+        iterator.nextStep = block.createCoroutine(receiver = iterator, completion = iterator)
         return iterator
     }
 }
 
-class GeneratorIterator<T>: AbstractIterator<T>(), Generator<T>, Continuation<Unit> {
-    private lateinit var nextStep: Continuation<Unit>
-
-    fun setNextStep(step: Continuation<Unit>) { this.nextStep = step }
+private class GeneratorIterator<T>: AbstractIterator<T>(), Generator<T>, Continuation<Unit> {
+    lateinit var nextStep: Continuation<Unit>
 
     // AbstractIterator implementation
     override fun computeNext() { nextStep.resume(Unit) }
@@ -34,6 +31,6 @@ class GeneratorIterator<T>: AbstractIterator<T>(), Generator<T>, Continuation<Un
     // Generator implementation
     override suspend fun yield(value: T) {
         setNext(value)
-        return suspendCoroutine { c -> setNextStep(c) }
+        return suspendCoroutine { c -> nextStep = c }
     }
 }

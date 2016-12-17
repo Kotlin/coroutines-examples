@@ -3,15 +3,15 @@ import kotlin.coroutines.CoroutineIntrinsics
 import kotlin.coroutines.createCoroutine
 import kotlin.coroutines.suspendCoroutine
 
-interface AsyncGenerator<T> {
+interface AsyncGenerator<in T> {
     suspend fun yield(value: T)
 }
 
-interface AsyncSequence<T> {
+interface AsyncSequence<out T> {
     fun asyncIterator(): AsyncIterator<T>
 }
 
-interface AsyncIterator<T> {
+interface AsyncIterator<out T> {
     suspend fun hasNext(): Boolean
     suspend fun next(): T
 }
@@ -29,19 +29,21 @@ class AsyncGeneratorIterator<T>: AsyncIterator<T>, AsyncGenerator<T>, Continuati
     var nextValue: T? = null
     var nextStep: Continuation<Unit>? = null
 
-    var computesNext = false //
-    var computeContinuation: Continuation<*>? = null // cont Boolean or cont T
+    // if (computesNext) computeContinuation is Continuation<T>
+    // if (!computesNext) computeContinuation is Continuation<Boolean>
+    var computesNext = false
+    var computeContinuation: Continuation<*>? = null
 
     suspend fun computeHasNext(): Boolean = suspendCoroutine { c ->
         computesNext = false
         computeContinuation = c
-        nextStep!!.resume(Unit) // leaves it in "done" state if crashes
+        nextStep!!.resume(Unit)
     }
 
     suspend fun computeNext(): T = suspendCoroutine { c ->
         computesNext = true
         computeContinuation = c
-        nextStep!!.resume(Unit) // leaves it in "done" state if crashes
+        nextStep!!.resume(Unit)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -87,13 +89,10 @@ class AsyncGeneratorIterator<T>: AsyncIterator<T>, AsyncGenerator<T>, Continuati
     }
 
     // Generator implementation
-    override suspend fun yield(value: T) {
-        return CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
-            computedNext = true
-            nextValue = value
-            nextStep = c
-            resumeIterator(null)
-            CoroutineIntrinsics.SUSPENDED
-        }
+    override suspend fun yield(value: T): Unit = suspendCoroutine { c ->
+        computedNext = true
+        nextValue = value
+        nextStep = c
+        resumeIterator(null)
     }
 }
