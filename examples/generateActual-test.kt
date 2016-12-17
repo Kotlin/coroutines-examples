@@ -1,4 +1,4 @@
-package generate_optimized
+package generateActual
 
 val fibonacci: Sequence<Int> = generate {
     yield(1) // first Fibonacci number
@@ -12,7 +12,14 @@ val fibonacci: Sequence<Int> = generate {
     }
 }
 
+val composite: Sequence<Int> = generate {
+    yield(0)
+    yieldAll(fibonacci.take(10))
+    yieldAll(listOf(-1, -2))
+}
+
 fun main(args: Array<String>) {
     println(fibonacci)
     println(fibonacci.take(10).joinToString())
+    println(composite.joinToString())
 }

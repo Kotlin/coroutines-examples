@@ -1062,16 +1062,16 @@ Optimized version of `yield` via `CoroutineIntrinsics.suspendCoroutineOrReturn` 
 Because `yield` always suspends, the corresponding block always returns `CoroutineIntrinsics.SUSPENDED`.
 
 ```kotlin
-     // Generator implementation
-     override suspend fun yield(value: T) {
-         setNext(value)
-         return CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
-             setNextStep(c)
-             CoroutineIntrinsics.SUSPENDED
-         }
-     }
+// Generator implementation
+override suspend fun yield(value: T) {
+    setNext(value)
+    return CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
+        nextStep = c
+        CoroutineIntrinsics.SUSPENDED
+    }
+}
 ```
 
-> You can get full code [here](examples/generate_optimized.kt)  
+> You can get full code [here](examples/generateOptimized.kt)  
  
 
