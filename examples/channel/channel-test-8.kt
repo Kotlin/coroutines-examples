@@ -32,7 +32,7 @@ suspend fun same(t1: Tree, t2: Tree): Boolean = suspending {
     same
 }
 
-fun main(args: Array<String>) = go {
+fun main(args: Array<String>) = go.main {
     val t1 = newTree(1)
     val t2 = newTree(1)
     val t3 = newTree(2)

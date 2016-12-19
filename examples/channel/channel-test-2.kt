@@ -13,10 +13,10 @@ suspend fun sum(s: List<Int>, c: SendChannel<Int>) = suspending {
     c.send(sum)
 }
 
-fun main(args: Array<String>) = go {
+fun main(args: Array<String>) = go.main {
     val s = listOf(7, 2, 8, -9, 4, 0)
     val c = Channel<Int>()
-    go { sum(s.subList(s.size /2, s.size), c) }
+    go { sum(s.subList(s.size / 2, s.size), c) }
     go { sum(s.subList(0, s.size / 2), c) }
     val x = c.receive()
     val y = c.receive()

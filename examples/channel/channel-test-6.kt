@@ -6,7 +6,7 @@ import channel.whileSelect
 
 // https://tour.golang.org/concurrency/6
 
-fun main(args: Array<String>) = go {
+fun main(args: Array<String>) = go.main {
     val tick = Time.tick(100)
     val boom = Time.after(500)
     whileSelect {

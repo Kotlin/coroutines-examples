@@ -4,14 +4,17 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.*
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.ContinuationDispatcher
+import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.suspendCoroutine
 
-object Go {
-    private val number = AtomicInteger()
-    private val active = ConcurrentHashMap<Int, CoroutineRef>()
+object go {
+    private val coroutineCounter = AtomicLong() // number coroutines for debugging
+    private val active = ConcurrentHashMap<Long, CoroutineRef>()
 
-    private val maxThreads = Runtime.getRuntime().availableProcessors()
+    private val maxThreads = Integer.getInteger("maxThreads", Runtime.getRuntime().availableProcessors())
 
     private val pool = ScheduledThreadPoolExecutor(maxThreads, ThreadFactory { runnable ->
         val thread = Thread(runnable)
@@ -27,9 +30,9 @@ object Go {
         pool.maximumPoolSize = maxThreads
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
-                val asleep = active.values.filter { !it.forever }
-                if (!asleep.isEmpty())
-                    println("fatal error: $asleep asleep - deadlock!")
+                val asleep = active.values.filter { !it.daemon }
+                if (asleep.any { it.main })
+                    println("fatal: $asleep asleep -- deadlock")
             }
         })
     }
@@ -38,17 +41,22 @@ object Go {
         pool.schedule({ c.resume(Unit)}, millis, TimeUnit.MILLISECONDS)
     }
 
-    // don't warn about "forever" coroutines on shutdown
-    fun go(name: String? = null, forever: Boolean = false, block: suspend Go.() -> Unit) {
-        val ref = CoroutineRef(number.incrementAndGet(), name, forever)
-        block.startCoroutine(receiver = Go, completion = ref, dispatcher = ref)
+    // don't warn about "daemon" coroutines on shutdown
+    operator fun invoke(name: String? = null, daemon: Boolean = false, main: Boolean = false, block: suspend go.() -> Unit) {
+        val ref = CoroutineRef(coroutineCounter.incrementAndGet(), name, daemon, main)
+        block.startCoroutine(receiver = go, completion = ref, dispatcher = ref)
     }
 
+    fun main(block: suspend go.() -> Unit) = invoke(main = true, block = block)
+
     private class CoroutineRef(
-        val index: Int, val name: String?, val forever: Boolean
+        val number: Long,
+        val name: String?,
+        val daemon: Boolean,
+        val main: Boolean
     ) : Continuation<Unit>, ContinuationDispatcher {
         init {
-            active.put(index, this)
+            active.put(number, this)
         }
 
         override fun resume(value: Unit) {
@@ -61,7 +69,7 @@ object Go {
         }
 
         private fun done() {
-            active.remove(index)
+            active.remove(number)
         }
 
         override fun <T> dispatchResume(value: T, continuation: Continuation<T>): Boolean {
@@ -75,13 +83,9 @@ object Go {
         }
 
         override fun toString(): String =
-            "coroutine #$index${if (name != null) " '$name'" else ""}${if (forever) " ,forever" else ""}"
+            "coroutine #$number" +
+                (if (name != null) " '$name'" else "") +
+                (if (daemon) "-daemon" else "") +
+                (if (main) "-main" else "")
     }
 }
-
-suspend fun <T> suspending(block: suspend Go.() -> T): T = CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
-    block.startCoroutine(receiver = Go, completion = c)
-    CoroutineIntrinsics.SUSPENDED
-}
-
-fun go(name: String? = null, forever: Boolean = false, block: suspend Go.() -> Unit) = Go.go(name, forever, block)

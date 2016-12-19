@@ -5,7 +5,7 @@ import java.time.Instant
 object Time {
     fun tick(millis: Long): ReceiveChannel<Instant> {
         val c = Channel<Instant>()
-        go("tick", forever = true) {
+        go("tick", daemon = true) {
             while (true) {
                 sleep(millis)
                 c.send(Instant.now())

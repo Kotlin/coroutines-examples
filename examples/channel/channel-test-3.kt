@@ -5,7 +5,7 @@ import channel.go
 
 // https://tour.golang.org/concurrency/3
 
-fun main(args: Array<String>) = go {
+fun main(args: Array<String>) = go.main {
     val c = Channel<Int>(2)
     c.send(1)
     c.send(2)

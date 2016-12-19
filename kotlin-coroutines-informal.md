@@ -39,6 +39,8 @@ Goals:
   * [Wrapping callbacks](#wrapping-callbacks)
   * [Cooperative single-thread multitasking](#cooperative-single-thread-multitasking)
   * [Asynchronous sequences](#asynchronous-sequences)
+  * [Channels](#channels)
+  * [Mutexes](#mutexes)
 * [Implementation details](#implementation-details)
   * [Continuation passing style](#continuation-passing-style)
   * [State machines](#state-machines)
@@ -871,6 +873,212 @@ for (value in seq) {
 > You can find a worked out example with some logging that illustrates the execution
   [here](examples/asyncGenerate-test.kt)
   
+  
+### Channels
+
+Go-style type-safe channels can be implemented in Kotlin as a library. We can define an interface for 
+send channel with suspending function `send`:
+
+```kotlin
+interface SendChannel<T> {
+    suspend fun send(value: T)
+    fun close()
+}
+```
+  
+and receiver channel with suspending function `receive` and an `operator iterator` in a similar style 
+to [asynchronous sequences](#asynchronous-sequences):
+
+```kotlin
+interface ReceiveChannel<T> {
+    suspend fun receive(): T
+    suspend operator fun iterator(): ReceiveIterator<T>
+}
+```
+
+The `Channel<T>` class implements both interfaces.
+The `send` suspends when the channel buffer is full, while `receive` suspends when the buffer is empty.
+It allows us to copy Go-style code into Kotlin almost verbatim.
+The `fibonacci` function that sends `n` fibonacci numbers in to a channel from
+[the 4th concurrency example of a tour of Go](https://tour.golang.org/concurrency/4)  would look 
+like this in Kotlin:
+
+```kotlin
+suspend fun fibonacci(n: Int, c: SendChannel<Int>) = suspending {
+    var x = 0
+    var y = 1
+    for (i in 0..n - 1) {
+        c.send(x)
+        val next = x + y
+        x = y
+        y = next
+    }
+    c.close()
+}
+```
+
+> Note, that we've also defined `suspending` builder [here](examples/channel/suspending.kt) to workaround 
+for the current limitation of tail-only calls inside suspending functions. 
+
+We can also define Go-style `go {...}` block to start the new coroutine in some kind of 
+multi-threaded pool that dispatches an arbitrary number of light-weight coroutines onto a fixed number of 
+actual heavy-weight threads.
+The example implementation [here](examples/channel/go.kt) is trivially written on top of
+Java's [`ScheduledThreadPoolExecutor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)
+with the fixed number of threads. Other implementations can be made to optimize thread usage and context switches.
+
+Using this `go` coroutine builder, the main function from the corresponding Go code would look like this:
+
+```kotlin
+fun main(args: Array<String>) = go.main {
+    val c = Channel<Int>(2)
+    go { fibonacci(10, c) }
+    for (i in c) { // suspends until value is received from the channel
+        println(i)
+    }
+}
+```
+
+> You can checkout working code [here](examples/channel/channel-test-4.kt)
+
+You can freely play with the buffer size of the channel. 
+For simplicity, only buffered channels are implemented in the example (with a minimal buffer size of 1), 
+because unbuffered channels are conceptually similar to [asynchronous sequences](#asynchronous-sequences)
+that were covered before.
+
+Go-style `select` control block that suspends until one of the actions becomes available on 
+one of the channels can be implemented as a Kotlin DSL, so that 
+[the 5th concurrency example of a tour of Go](https://tour.golang.org/concurrency/5)  would look 
+like this in Kotlin:
+ 
+```kotlin
+suspend fun fibonacci(c: SendChannel<Int>, quit: ReceiveChannel<Int>) = suspending {
+    var x = 0
+    var y = 1
+    whileSelect {
+        c.onSend(x) {
+            val next = x + y
+            x = y
+            y = next
+            true // continue while loop
+        }
+        quit.onReceive {
+            println("quit")
+            false // break while loop
+        }
+    }
+}
+```
+
+> You can checkout working code [here](examples/channel/channel-test-5.kt)
+  
+Example has an implementation of both `select {...}`, that returns the result of one of its cases like a Kotlin 
+[`when` expression](https://kotlinlang.org/docs/reference/control-flow.html#when-expression), 
+and a convenience `whileSelect { ... }` that is the same as `while(select<Boolean> { ... })` with fewer braces.
+  
+The default selection case from [the 6th concurrency example of a tour of Go](https://tour.golang.org/concurrency/6) 
+just adds one more case into the `select {...}` DSL:
+
+```kotlin
+fun main(args: Array<String>) = go.main {
+    val tick = Time.tick(100)
+    val boom = Time.after(500)
+    whileSelect {
+        tick.onReceive {
+            println("tick.")
+            true // continue loop
+        }
+        boom.onReceive {
+            println("BOOM!")
+            false // break loop
+        }
+        onDefault {
+            println("    .")
+            sleep(50)
+            true // continue loop
+        }
+    }
+}
+```
+
+> You can checkout working code [here](examples/channel/channel-test-6.kt)
+
+The `Time.tick` and `Time.after` are trivially implemented 
+[here](examples/channel/time.kt), because go-dispatcher provides a suspending 
+`sleep` function that suspends a coroutine in a non-blocking fashion using capabilities 
+of the underlying thread pool.
+  
+Other examples can be found [here](examples/channel/) together with the links to 
+the corresponding Go code in comments.
+
+Note, that this sample implementation of channels is based on a single
+lock to manage its internal wait lists. It makes it easier to understand and reason about. 
+However, it never runs user code under this lock and thus it is fully concurrent. 
+This lock only somewhat limits its scalability to a very large number of concurrent threads.
+This implementation can be optimized to use lock-free disjoint-access-parallel
+data structures to scale to a large number of cores without changing its user-facing APIs. 
+Channels are not built into the language, 
+their implementation code be readily examined, improved, or replaced.
+
+The other important observation is that this channel implementation is independent 
+of the underlying dispatcher. It can be used in UI applications 
+under an event-thread dispatcher as shown in the 
+corresponding [dispatcher](#dispatcher) section, or under any other kind of dispatcher, or without
+a dispatcher at all (in the later case, the execution thread is determined solely by the code
+of the other suspending functions used in a coroutine).
+The channel implementation just provides thread-safe non-blocking suspending functions.
+  
+You can convince yourself that all the examples [here](examples/channel/) are actually non-blocking and can work
+just as well from a single thread, by running them with `-DmaxThreads=1` JVM option
+that the sample `go` dispatcher [here](examples/channel/go.kt) is using to configure its thread
+pool.
+
+### Mutexes
+
+Writing scalable asynchronous applications is a discipline that one follows, making sure that ones code 
+never blocks, but suspends (using suspending functions), without actually blocking a thread.
+The Java concurrency primitives like 
+[`ReentrantLock`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantLock.html)
+are thread-blocking and they should not be used in a truly non-blocking code. To control access to shared
+resources one can define Go-style `Mutex` that suspends an execution of coroutine instead of blocking it.
+The header of the corresponding class would like this:
+
+```kotlin
+class Mutex {
+    suspend fun lock()
+    fun unlock()
+}
+```
+
+> You can get full implementation [here](examples/mutex.kt)
+
+Using this implementation of non-blocking mutex
+[the 9th concurrency example of a tour of Go](https://tour.golang.org/concurrency/9)
+can be translated into Kotlin using Kotlin's
+[`try-finally`](https://kotlinlang.org/docs/reference/exceptions.html)
+that serves the same purposes as Go's `defer`:
+
+```kotlin
+class SafeCounter {
+    private val v = mutableMapOf<String, Int>()
+    private val mux = Mutex()
+
+    suspend fun inc(key: String) = suspending {
+        mux.lock()
+        try { v[key] = v.getOrDefault(key, 0) + 1 }
+        finally { mux.unlock() }
+    }
+
+    suspend fun get(key: String): Int? = suspending {
+        mux.lock()
+        try { v[key] }
+        finally { mux.unlock() }
+    }
+}
+```
+
+> You can checkout working code [here](examples/channel/channel-test-9.kt)
+
 ## Implementation details
 
 This section provides a glimpse into implementation details of coroutines. They are hidden

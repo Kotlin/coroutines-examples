@@ -1,6 +1,7 @@
 package channel
 
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.startCoroutine
@@ -26,7 +27,11 @@ interface ReceiveIterator<out T> {
 
 private const val CHANNEL_CLOSED = "Channel was closed"
 
+private val channelCounter = AtomicLong() // number channels for debugging
+
 class Channel<T>(val capacity: Int = 1) : SendChannel<T>, ReceiveChannel<T> {
+    init { require(capacity >= 1) }
+    private val number = channelCounter.incrementAndGet() // for debugging
     private var closed = false
     private val buffer = ArrayDeque<T>(capacity)
     private val waiters = SentinelWaiter<T>()
@@ -251,7 +256,7 @@ class Channel<T>(val capacity: Int = 1) : SendChannel<T>, ReceiveChannel<T> {
     }
 
     override fun toString(): String = locked {
-        "Channel closed=$closed, buffer=$buffer, waiters=$waitersString"
+        "Channel #$number closed=$closed, buffer=$buffer, waiters=$waitersString"
     }
 }
 

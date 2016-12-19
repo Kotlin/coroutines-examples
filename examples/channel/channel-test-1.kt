@@ -12,7 +12,7 @@ suspend fun say(s: String) = suspending {
     }
 }
 
-fun main(args: Array<String>) = go {
+fun main(args: Array<String>) = go.main {
     go { say("world") }
     say("hello")
 }

@@ -19,7 +19,7 @@ suspend fun fibonacci(n: Int, c: SendChannel<Int>) = suspending {
     c.close()
 }
 
-fun main(args: Array<String>) = go {
+fun main(args: Array<String>) = go.main {
     val c = Channel<Int>(2)
     go { fibonacci(10, c) }
     for (i in c) {
