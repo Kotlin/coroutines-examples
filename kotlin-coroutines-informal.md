@@ -395,7 +395,7 @@ To summarize:
         
 ### Library interfaces
 
-Here's the minimal version of the core library interface `Continuation` (there will likely be extra members to handle advanced use cases such as restrating the coroutine from the beginning or serializing its state):
+Here's the minimal version of the core library interface `Continuation` (there will likely be extra members to handle advanced use cases such as restarting the coroutine from the beginning or serializing its state):
 
 ``` kotlin
 interface Continuation<P> {
