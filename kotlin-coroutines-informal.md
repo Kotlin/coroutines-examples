@@ -395,7 +395,7 @@ To summarize:
         
 ### Library interfaces
 
-Here's the minimal version of the core library interface `Continuation` (there will likely be extra members to handle advanced use cases such as restrating the coroutine from the beginning or serializing its state):
+Here's the minimal version of the core library interface `Continuation` (there will likely be extra members to handle advanced use cases such as restarting the coroutine from the beginning or serializing its state):
 
 ``` kotlin
 interface Continuation<P> {
@@ -532,7 +532,7 @@ suspend fun <T> FutureController<T>.downloadUrl(url: Url, next: Continuation<Res
      this.await(downloadFuture(url), next)
 ```
 
-The motivation for such a design is safety: in some cases adding suspending extensions that the controller is not aware about may break the contract of a coroutine. Example: adding a suspending extension to `generate` may result in the iterator being "stuck" without next value available for it, because teh code has been suspended by some extension that does not actually yield anything.  
+The motivation for such a design is safety: in some cases adding suspending extensions that the controller is not aware about may break the contract of a coroutine. Example: adding a suspending extension to `generate` may result in the iterator being "stuck" without next value available for it, because the code has been suspended by some extension that does not actually yield anything.  
  
 ### Result handlers
 
@@ -699,7 +699,7 @@ A controller should be able to abort the execution of a coroutine. In that case 
 
 In the example above, at a suspension point inside the inner try, the controller must be able to execute both `finally` blocks: the one with `foo()` and the one with `bar()`. 
      
-This can be implemented by emitting an extra method containing finally blocks and available through teh `Continuation` interface:
+This can be implemented by emitting an extra method containing finally blocks and available through the `Continuation` interface:
 
 ```
 interface Continuation<P> {
