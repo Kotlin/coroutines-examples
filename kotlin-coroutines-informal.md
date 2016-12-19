@@ -408,11 +408,9 @@ An implementation of a typical _suspending function_ like `await` looks like thi
 suspend fun <T> await(f: CompletableFuture<T>): T =
     suspendCoroutine<T> { c: Continuation<T> ->
         f.whenComplete { result, exception ->
-            if (exception == null)
-                // the future has been completed normally, resume execution with result
+            if (exception == null) // the future has been completed normally
                 c.resume(result) 
-            else          
-                // the future has completed with an exception, resume execution with exception
+            else // the future has completed with an exception
                 c.resumeWithException(exception)
         }
     }
