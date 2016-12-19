@@ -19,7 +19,7 @@ class SafeCounter {
         }
     }
 
-    suspend operator fun get(key: String): Int? = suspending {
+    suspend fun get(key: String): Int? = suspending {
         mux.lock()
         try {
             v[key]
