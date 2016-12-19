@@ -1,4 +1,5 @@
 package channel.test4
+
 import channel.Channel
 import channel.SendChannel
 import channel.go
@@ -21,8 +22,7 @@ suspend fun fibonacci(n: Int, c: SendChannel<Int>) = suspending {
 fun main(args: Array<String>) = go {
     val c = Channel<Int>(2)
     go { fibonacci(10, c) }
-    while (true) {
-        val i = c.receiveOrNull() ?: break
+    for (i in c) {
         println(i)
     }
 }

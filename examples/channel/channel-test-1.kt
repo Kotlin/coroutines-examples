@@ -1,4 +1,5 @@
 package channel.test1
+
 import channel.go
 import channel.suspending
 

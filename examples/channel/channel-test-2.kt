@@ -1,4 +1,5 @@
 package channel.test2
+
 import channel.Channel
 import channel.SendChannel
 import channel.go

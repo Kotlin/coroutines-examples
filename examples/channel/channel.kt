@@ -3,6 +3,7 @@ package channel
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.startCoroutine
 import kotlin.coroutines.suspendCoroutine
 
 interface SendChannel<T> {
@@ -15,6 +16,12 @@ interface ReceiveChannel<T> {
     suspend fun receive(): T // throws NoSuchElementException on closed channel
     suspend fun receiveOrNull(): T? // returns null on closed channel
     fun <R> selectReceive(a: ReceiveCase<T, R>): Boolean
+    suspend operator fun iterator(): ReceiveIterator<T>
+}
+
+interface ReceiveIterator<out T> {
+    suspend operator fun hasNext(): Boolean
+    suspend operator fun next(): T
 }
 
 private const val CHANNEL_CLOSED = "Channel was closed"
@@ -139,6 +146,59 @@ class Channel<T>(val capacity: Int = 1) : SendChannel<T>, ReceiveChannel<T> {
         return true
     }
 
+    suspend override fun iterator(): ReceiveIterator<T> = ReceiveIteratorImpl()
+
+    inner class ReceiveIteratorImpl: ReceiveIterator<T> {
+        private var computedNext = false
+        private var hasNextValue = false
+        private var nextValue: T? = null
+
+        suspend override fun hasNext(): Boolean {
+            if (computedNext) return hasNextValue
+            return suspendCoroutine sc@ { c ->
+                var sendWaiter: Waiter<T>? = null
+                locked {
+                    if (empty) {
+                        if (!closed) {
+                            addWaiter(IteratorHasNextWaiter(c, this))
+                            return@sc // suspended
+                        } else
+                            setClosed()
+                    } else {
+                        setNext(buffer.removeFirst())
+                        sendWaiter = unlinkFirstWaiter()
+                        if (sendWaiter != null) buffer.add(sendWaiter!!.getSendValue())
+                    }
+                }
+                sendWaiter?.resumeSend()
+                c.resume(hasNextValue)
+            }
+        }
+
+        suspend override fun next(): T {
+            // return value previous acquired by hasNext
+            if (computedNext) {
+                val result = nextValue as T
+                computedNext = false
+                nextValue = null
+                return result
+            }
+            // do a regular receive is hasNext was not previously invoked
+            return receive()
+        }
+
+        fun setNext(value: T) {
+            computedNext = true
+            hasNextValue = true
+            nextValue = value
+        }
+
+        fun setClosed() {
+            computedNext = true
+            hasNextValue = false
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     override fun close() {
         var killList: ArrayList<Waiter<T>>? = null
@@ -254,8 +314,21 @@ class ReceiveOrNullWaiter<T>(val c: Continuation<T?>) : Waiter<T>() {
     override fun resumeClosed() = c.resume(null)
 }
 
+class IteratorHasNextWaiter<T>(val c: Continuation<Boolean>, val it: Channel<T>.ReceiveIteratorImpl) : Waiter<T>() {
+    override fun resumeReceive(value: T) { it.setNext(value); c.resume(true) }
+    override fun resumeClosed() { it.setClosed(); c.resume(false) }
+}
+
 data class Selector<R>(val c: Continuation<R>, val cases: List<SelectCase<*, R>>) {
     var resolved = false
+
+    fun resolve() {
+        resolved = true
+        cases
+            .asSequence()
+            .filter { it.linked }
+            .forEach { it.unlinkOne() }
+    }
 }
 
 sealed class SelectCase<T, R> : Waiter<T>() {
@@ -263,11 +336,7 @@ sealed class SelectCase<T, R> : Waiter<T>() {
     abstract fun select(selector: Selector<R>): Boolean
 
     override fun unlink() {
-        selector.resolved = true
-        for (other in selector.cases) {
-            if (other.linked)
-                other.unlinkOne()
-        }
+        selector.resolve()
     }
 }
 
@@ -284,3 +353,14 @@ class ReceiveCase<T, R>(val c: ReceiveChannel<T>, val action: (T) -> R) : Select
     override fun select(selector: Selector<R>): Boolean = c.selectReceive(this)
 }
 
+class DefaultCase<R>(val action: suspend () -> R) : SelectCase<Nothing, R>() {
+    override fun select(selector: Selector<R>): Boolean {
+        locked {
+            if (selector.resolved) return true // already resolved selector, do nothing
+            selector.resolve() // default case resolves selector immediately
+        }
+        // now start action
+        action.startCoroutine(completion = selector.c)
+        return true
+    }
+}

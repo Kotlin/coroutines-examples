@@ -1,24 +1,24 @@
 package channel.test5
+
 import channel.*
 
-// https://tour.golang.org/concurrency/4
+// https://tour.golang.org/concurrency/5
 
 suspend fun fibonacci(c: SendChannel<Int>, quit: ReceiveChannel<Int>): Unit = suspending {
     var x = 0
     var y = 1
-    while(select {
+    whileSelect {
         c.onSend(x) {
             val next = x + y
             x = y
             y = next
-            true
+            true // continue while loop
         }
         quit.onReceive {
             println("quit")
-            false
+            false // break while loop
         }
-    })
-    Unit
+    }
 }
 
 fun main(args: Array<String>) = go {

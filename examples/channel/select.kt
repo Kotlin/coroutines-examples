@@ -16,6 +16,10 @@ class SelectorBuilder<R> {
         cases.add(ReceiveCase(this, action))
     }
 
+    fun onDefault(action: suspend () -> R) {
+        cases.add(DefaultCase(action))
+    }
+
     suspend fun doSelect(): R {
         require(!cases.isEmpty())
         return suspendCoroutine { c ->
@@ -28,4 +32,7 @@ class SelectorBuilder<R> {
     }
 }
 
-
+suspend fun whileSelect(block: SelectorBuilder<Boolean>.() -> Unit): Unit = suspending {
+    while(select(block))
+    Unit
+}

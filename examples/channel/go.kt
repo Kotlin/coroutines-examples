@@ -27,7 +27,7 @@ object Go {
         pool.maximumPoolSize = maxThreads
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
-                val asleep = active.values.toList()
+                val asleep = active.values.filter { !it.forever }
                 if (!asleep.isEmpty())
                     println("fatal error: $asleep asleep - deadlock!")
             }
@@ -38,12 +38,15 @@ object Go {
         pool.schedule({ c.resume(Unit)}, millis, TimeUnit.MILLISECONDS)
     }
 
-    fun go(block: suspend Go.() -> Unit) {
-        val ref = CoroutineRef(number.incrementAndGet())
+    // don't warn about "forever" coroutines on shutdown
+    fun go(name: String? = null, forever: Boolean = false, block: suspend Go.() -> Unit) {
+        val ref = CoroutineRef(number.incrementAndGet(), name, forever)
         block.startCoroutine(receiver = Go, completion = ref, dispatcher = ref)
     }
 
-    private class CoroutineRef(val index: Int) : Continuation<Unit>, ContinuationDispatcher {
+    private class CoroutineRef(
+        val index: Int, val name: String?, val forever: Boolean
+    ) : Continuation<Unit>, ContinuationDispatcher {
         init {
             active.put(index, this)
         }
@@ -71,7 +74,8 @@ object Go {
             return true
         }
 
-        override fun toString(): String = "coroutine #$index"
+        override fun toString(): String =
+            "coroutine #$index${if (name != null) " '$name'" else ""}${if (forever) " ,forever" else ""}"
     }
 }
 
@@ -80,4 +84,4 @@ suspend fun <T> suspending(block: suspend Go.() -> T): T = CoroutineIntrinsics.s
     CoroutineIntrinsics.SUSPENDED
 }
 
-fun go(block: suspend Go.() -> Unit) = Go.go(block)
+fun go(name: String? = null, forever: Boolean = false, block: suspend Go.() -> Unit) = Go.go(name, forever, block)
