@@ -1,5 +1,4 @@
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineIntrinsics
 import kotlin.coroutines.createCoroutine
 import kotlin.coroutines.suspendCoroutine
 
@@ -8,16 +7,16 @@ interface AsyncGenerator<in T> {
 }
 
 interface AsyncSequence<out T> {
-    fun asyncIterator(): AsyncIterator<T>
+    operator fun iterator(): AsyncIterator<T>
 }
 
 interface AsyncIterator<out T> {
-    suspend fun hasNext(): Boolean
-    suspend fun next(): T
+    suspend operator fun hasNext(): Boolean
+    suspend operator fun next(): T
 }
 
 fun <T> asyncGenerate(block: suspend AsyncGenerator<T>.() -> Unit): AsyncSequence<T> = object : AsyncSequence<T> {
-    override fun asyncIterator(): AsyncIterator<T> {
+    override fun iterator(): AsyncIterator<T> {
         val iterator = AsyncGeneratorIterator<T>()
         iterator.nextStep = block.createCoroutine(receiver = iterator, completion = iterator)
         return iterator
