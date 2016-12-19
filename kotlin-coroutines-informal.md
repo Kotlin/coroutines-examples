@@ -801,8 +801,8 @@ interface, but its `next()` and `hasNext()` functions are suspending:
  
 ```kotlin
 interface AsyncIterator<out T> {
-    suspend fun hasNext(): Boolean
-    suspend fun next(): T
+    suspend operator fun hasNext(): Boolean
+    suspend operator fun next(): T
 }
 ```
 
@@ -811,7 +811,7 @@ The definition of `AsyncSequence` is similiar to a standard synchronous
 
 ```kotlin
 interface AsyncSequence<out T> {
-    fun asyncIterator(): AsyncIterator<T>
+    operator fun iterator(): AsyncIterator<T>
 }
 ```
 
@@ -857,12 +857,15 @@ val seq = asyncGenerate {
 ```
    
 Now the consumer coroutine can consume this sequence at its own pace, while also 
-suspending with other arbirary suspending functions:
+suspending with other arbitrary suspending functions. Note, that 
+Kotlin [for loops](https://kotlinlang.org/docs/reference/control-flow.html#for-loops)
+work by convention, so there is no need to for a special `await for` loop construct in the language.
+The regular `for` loop can be used to iterate over an asynchronous sequence that we've defined
+above. It is suspended whenever producer does not have a value:
+
 
 ```kotlin
-val it = seq.asyncIterator()
-while (it.hasNext()) {
-    val value = it.next()
+for (value in seq) {
     // do something with value here, may suspend without restrictions
 }
 ```
