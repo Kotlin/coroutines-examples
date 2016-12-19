@@ -647,11 +647,11 @@ However, `generate{}` and `yield()`, as shown above, are not ready for an arbitr
 to capture the continuation in their scope. They work _synchronously_.
 They need absolute control on how continuation is captured, 
 where it is stored, and when it is resumed. They form _restricted suspension scope_. 
-The ability to restrict suspensions is provided by `@RestrictsSuspendExtensions` annotation that is placed
+The ability to restrict suspensions is provided by `@RestrictsSuspension` annotation that is placed
 on the scope class or interface, in the above example this scope interface is `Generator`:
 
 ```kotlin
-@RestrictsSuspendExtensions
+@RestrictsSuspension
 interface Generator<in T> {
     suspend fun yield(value: T)
 }
@@ -659,10 +659,11 @@ interface Generator<in T> {
 
 This annotation enforces certain restrictions on suspending functions that can be used in the
 scope of `generate{}` or similar synchronous coroutine builder. 
-Any extension suspending lambda or function that has _restricted suspension scope_ class or interface as its receiver is 
+Any extension suspending lambda or function that has _restricted suspension scope_ class or interface 
+(marked with `@RestrictsSuspension`) as its receiver is 
 called a _restricted suspending function_.
 Restricted suspending functions can only invoke member or
-extension suspending functions on the same instance of their restricted coroutine scope. 
+extension suspending functions on the same instance of their restricted suspension scope. 
 In particular, it means that
 no `Generator` extension of lambda in its scope can invoke `suspendContinuation` or other 
 general suspending function. To suspend the execution of a `generate` coroutine they must ultimately invoke
@@ -761,7 +762,7 @@ interface AsyncThreadScope {
 
 This scope interface defines `async` and `sleep` to start sub-tasks in the same thread 
 and to efficiently sleep in a cooperative way. 
-The `@RestrictsSuspendExtensions` annotation on the scope interface is _not_ needed.
+The `@RestrictsSuspension` annotation on the scope interface is _not_ needed.
 We'll have _composability_ with arbitrary 3-rd party suspending functions, 
 like asynchronous IO as shown in [wrapping callbacks](#wrapping-callbacks) section,
  with `await` suspending function as shown in [suspending functions](#suspending-functions) section, etc.

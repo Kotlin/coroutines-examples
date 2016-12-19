@@ -1,11 +1,11 @@
 package generate
 
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.RestrictsSuspendExtensions
+import kotlin.coroutines.RestrictsSuspension
 import kotlin.coroutines.createCoroutine
 import kotlin.coroutines.suspendCoroutine
 
-@RestrictsSuspendExtensions
+@RestrictsSuspension
 interface Generator<in T> {
     suspend fun yield(value: T)
 }

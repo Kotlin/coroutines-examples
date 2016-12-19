@@ -2,13 +2,13 @@ package generateActual
 
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineIntrinsics
-import kotlin.coroutines.RestrictsSuspendExtensions
+import kotlin.coroutines.RestrictsSuspension
 import kotlin.coroutines.createCoroutine
 
 /**
  * Scope of [generate] block.
  */
-@RestrictsSuspendExtensions
+@RestrictsSuspension
 public abstract class Generator<in T> internal constructor() {
     /**
      * Yields a value in [generate] block.
