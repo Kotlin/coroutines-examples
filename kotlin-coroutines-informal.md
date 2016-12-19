@@ -532,7 +532,7 @@ suspend fun <T> FutureController<T>.downloadUrl(url: Url, next: Continuation<Res
      this.await(downloadFuture(url), next)
 ```
 
-The motivation for such a design is safety: in some cases adding suspending extensions that the controller is not aware about may break the contract of a coroutine. Example: adding a suspending extension to `generate` may result in the iterator being "stuck" without next value available for it, because teh code has been suspended by some extension that does not actually yield anything.  
+The motivation for such a design is safety: in some cases adding suspending extensions that the controller is not aware about may break the contract of a coroutine. Example: adding a suspending extension to `generate` may result in the iterator being "stuck" without next value available for it, because the code has been suspended by some extension that does not actually yield anything.  
  
 ### Result handlers
 
