@@ -1,5 +1,6 @@
 package channel.test8
 
+import channel.Channel
 import channel.SendChannel
 import channel.go
 import channel.suspending
@@ -8,27 +9,38 @@ import java.util.*
 // https://tour.golang.org/concurrency/7
 // https://tour.golang.org/concurrency/8
 
-//suspend fun Tree.walk(ch: SendChannel<Int>) = suspending {
-//    left?.walk(ch)
-//    ch.send(value)
-//    right?.walk(ch)
-//    Unit
-//}
+val treeSize = 10
 
-//suspend fun same(t1: Tree, t2: Tree): Boolean = suspending same@ {
-//    val c1 = Channel<Int>()
-//    val c2 = Channel<Int>()
-//    t1.walk(c1)
-//    t2.walk(c2)
-//
-//    true
-//}
+suspend fun Tree.walk(ch: SendChannel<Int>): Unit = suspending {
+    left?.walk(ch)
+    ch.send(value)
+    right?.walk(ch)
+    Unit
+}
+
+suspend fun same(t1: Tree, t2: Tree): Boolean = suspending {
+    val c1 = Channel<Int>()
+    val c2 = Channel<Int>()
+    go { t1.walk(c1) }
+    go { t2.walk(c2) }
+    var same = true
+    for (i in 1..treeSize) {
+        val v1 = c1.receive()
+        val v2 = c2.receive()
+        if (v1 != v2) same = false
+    }
+    same
+}
 
 fun main(args: Array<String>) = go {
     val t1 = newTree(1)
-    val t2 = newTree(2)
+    val t2 = newTree(1)
+    val t3 = newTree(2)
     println("t1 = $t1")
     println("t2 = $t2")
+    println("t3 = $t3")
+    println("t1 same as t2? ${same(t1, t2)}")
+    println("t1 same as t3? ${same(t1, t3)}")
 }
 
 // https://github.com/golang/tour/blob/master/tree/tree.go
@@ -45,7 +57,7 @@ fun Tree?.insert(v: Int): Tree {
 
 fun newTree(k: Int): Tree {
     var t: Tree? = null
-    val list = (1..10).toMutableList()
+    val list = (1..treeSize).toMutableList()
     Collections.shuffle(list)
     for (v in list) {
         t = t.insert(v * k)
