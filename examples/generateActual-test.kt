@@ -15,6 +15,7 @@ val fibonacci: Sequence<Int> = generate {
 val composite: Sequence<Int> = generate {
     yield(0)
     yieldAll(fibonacci.take(10))
+    yieldAll(listOf()) // yielding an empty list does not actually suspend generator
     yieldAll(listOf(-1, -2))
 }
 

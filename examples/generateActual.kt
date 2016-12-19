@@ -82,8 +82,7 @@ private class GeneratorIterator<T>: Generator<T>(), Iterator<T>, Continuation<Un
     }
 
     override suspend fun yieldAll(iterator: Iterator<T>) {
-// todo: fixme when backend is fixed
-//        if (!iterator.hasNext()) return // no values -- don't suspend
+        if (!iterator.hasNext()) return // no values -- don't suspend
         nextValue = iterator.next()
         return CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
             nextStep = IteratorContinuation(c, iterator)
