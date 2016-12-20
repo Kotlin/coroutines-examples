@@ -2,39 +2,79 @@ package mutex
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineIntrinsics
 
 class Mutex {
-    private val locked = AtomicBoolean()
+    /*
+       Note: this is a non-optimized implementation designed for understandability, so it just
+       uses AtomicInteger and ConcurrentLinkedQueue instead of of embedding these data structures right here
+       to optimize object count per mutex.
+    */
+
+    // -1 == unlocked, >= 0 -> number of active waiters
+    private val state = AtomicInteger(-1)
+    // can have more waiters than registered in state (we add waiter first)
     private val waiters = ConcurrentLinkedQueue<Waiter>()
 
     suspend fun lock() {
-        if (locked.compareAndSet(false, true)) return // locked successfully
-        return CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
+        // fast path -- try lock uncontended
+        if (state.compareAndSet(-1, 0)) return
+        // slow path -- other cases
+        return CoroutineIntrinsics.suspendCoroutineOrReturn sc@ { c ->
+            // tentatively add a waiter before locking (and we can get resumed because of that!)
             val waiter = Waiter(c)
             waiters.add(waiter)
-            // try lock again
-            if (locked.compareAndSet(false, true)) {
-                // locked successfully this time -- try mark as resumed
-                if (waiter.resumed.compareAndSet(false, true))
-                    return Unit // don't suspend, but continue execution with lock
-                // was already resumed by some other thread -> suspend
+            loop@ while (true) { // lock-free loop on state
+                val curState = state.get()
+                if (curState == -1) {
+                    if (state.compareAndSet(-1, 0)) {
+                        // locked successfully this time, there were no _other_ waiter -- try mark us as resumed
+                        if (waiter.resumed.compareAndSet(false, true))
+                            return@sc Unit // don't suspend, but continue execution with lock
+                        // was already resumed by some other thread -> suspend
+                        break@loop
+                    }
+                } else { // state >= 0 -- already locked --> increase waiters count and sleep peacefully until resumed
+                    check(curState >= 0)
+                    if (state.compareAndSet(curState, curState + 1)) {
+                        break@loop
+                    }
+                }
             }
             CoroutineIntrinsics.SUSPENDED // suspend
         }
     }
 
     fun unlock() {
-        // unlock first, then resume one waiter
-        locked.set(false)
-        while (true) {
-            val waiter = waiters.poll() ?: break
-            // try resume one waiter
-            if (waiter.resumed.compareAndSet(false, true)) {
-                waiter.c.resume(Unit)
-                break
+        while (true) { // look-free loop on state
+            // see if can unlock
+            val curState = state.get()
+            if (curState == 0) {
+                // could not have any waiters in this state, because we are holding a mutex and only mutex-holder
+                // can reduce the number of waiters
+                if (state.compareAndSet(0, -1))
+                    return // successfully unlocked, no waiters were there to resume
+            } else {
+                check(curState >= 1)
+                // now decrease waiters count and resume waiter
+                if (state.compareAndSet(curState, curState - 1)) {
+                    // must had a waiter!!
+                    retrieveWaiter()!!.c.resume(Unit)
+                    return
+                }
             }
+        }
+    }
+
+    private fun retrieveWaiter(): Waiter? {
+        while (true) {
+            val waiter = waiters.poll() ?: return null
+            // see if this is an _actual_ waiter (not resumed yet by some previous mutex holder)
+            if (waiter.resumed.compareAndSet(false, true))
+                return waiter
+            // otherwise it is an artefact, just look for the next one
         }
     }
 
