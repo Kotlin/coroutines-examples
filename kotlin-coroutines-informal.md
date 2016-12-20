@@ -84,7 +84,7 @@ inFile.read(buf) {
 ```
 
 Note that we have a callback inside a callback here, and while it saves us from a lot of boilerplate (e.g. there's no 
-need to pass the `buf` parameter explicitly to callbacks, they just see it as part of their closure), the indentation
+need to pass the `buf` parameter explicitly to callbacks, they just see it as a part of their closure), the indentation
 levels are growing every time, and one can easily anticipate the problems that may come at nesting levels greater 
 than one (google for "callback hell" to see how much people suffer from this in JavaScript).
 
@@ -292,7 +292,7 @@ asyncSwing {
  
  > The library code for `asyncSwing {}` is shown in the [dispatcher](#dispatcher) section.
  
-All exception handing is performed using natural language constructs. 
+All exception handling is performed using natural language constructs. 
 
 ### More use cases
  
@@ -355,7 +355,7 @@ as shown in [use cases](#use-cases), are coroutine builders defined in a library
 The standard library provides primitive coroutine builders that are used to define all other coroutine builders.
 
 > Note: Some languages have hard-coded support for particular ways to create and start a coroutines that define
-  how its execution and result are represented. For example, `generate` _keyword_ may define a coroutine that 
+  how their execution and result are represented. For example, `generate` _keyword_ may define a coroutine that 
   returns a certain kind of iterable object, while `async` _keyword_ may define a coroutine that returns a
   certain kind of promise or task. Kotlin does not have keywords or modifiers to define and start a coroutine. 
   Coroutine builders are simply functions defined in a library. 
@@ -372,7 +372,7 @@ Syntactically, a suspension point is an invocation of suspending function, but t
 suspension happens when the suspending function invokes the standard library primitive to suspend the execution.
 
 * A _continuation_ — is a state of the suspended coroutine at suspension point. It conceptually represents 
-the rest of its execution after suspension point. For example:
+the rest of its execution after the suspension point. For example:
 
 ```kotlin
 generate {
@@ -388,7 +388,7 @@ the last one prints "over" and completes the coroutine. The coroutine that is _c
 _started_ yet, is represented by its _initial continuation_ of type `Continuation<Unit>` that consists of
 its whole execution.
 
-As mentioned above, one of the driving requirements for this proposal is flexibility:
+As mentioned above, one of the driving requirements for coroutines is flexibility:
 we want to be able to support many existing asynchronous APIs and other use cases and minimize 
 the parts hard-coded into the compiler. As a result, the compiler is only responsible for support
 of suspending functions, suspending lambdas, and the corresponding suspending function types. 
@@ -396,7 +396,7 @@ There are few primitives in the standard library and the rest is left to applica
 
 ### Continuation interface
 
-Here's is the definition of the standard library interface `Continuation`, which represents
+Here is the definition of the standard library interface `Continuation`, which represents
 a generic callback:
 
 ```kotlin
@@ -425,7 +425,7 @@ suspend fun <T> await(f: CompletableFuture<T>): T =
 > You can get this code [here](examples/await.kt)  
 
 The `suspend` modifier indicates that this is a function that can suspend execution of a coroutine. 
-Suspend functions may invoke any regular functions, but to actually suspend execution they must
+Suspending functions may invoke any regular functions, but to actually suspend execution they must
 invoke some other suspending function. In particular, this `await` implementation invokes a suspending function 
 `suspendCoroutine` that is defined in the standard library in the following way:
 
@@ -453,7 +453,7 @@ which, in turn, becomes the return value of `await()` when the coroutine _resume
 
 ### Coroutine builders
 
-Suspending functions cannot be invoked from regular functions, so standard library provides functions
+Suspending functions cannot be invoked from regular functions, so the standard library provides functions
 to start coroutine execution from a regular non-suspending scope. Here is the implementation of a typical
 `async{}` _coroutine builder_:
 
@@ -475,13 +475,13 @@ fun <T> async(block: suspend () -> T): CompletableFuture<T> {
 > You can get this code [here](examples/async.kt)  
 
 Normally, a coroutine builder function uses some class like Future, Sequence, AsyncTask or alike 
-to return the result of the completed coroutine
+to return the result of the completed coroutine.
 In the case of `async{}`, the 
 [`ComplatableFuture`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html)
 is used. Builder _starts_ the coroutine, defines coroutine _completion continuation_, and returns. 
 The returned object is the public API for the user of this builder. 
 
-The `startCoroutine` is defined in a standard library as an extension for suspending function type. 
+The `startCoroutine` is defined in the standard library as an extension for suspending function type. 
 Its simplified signature is:
 
 ```kotlin
@@ -490,7 +490,7 @@ fun <T> (suspend  () -> T).startCoroutine(completion: Continuation<T>)
 
 The `startCoroutine` creates coroutine and starts its execution in the current thread 
 until the first _suspension point_, then it returns.
-Suspension point is an invocation of some [suspending function](#suspending-functions) in the body of coroutine and
+Suspension point is an invocation of some [suspending function](#suspending-functions) in the body of the coroutine and
 it is up to the code of the corresponding suspending function to define when and how the coroutine execution resumes.
 
 The completion of coroutine invokes _completion continuation_. Its `resume` or `resumeWithException`
@@ -618,9 +618,9 @@ interface Generator<in T> {
 ```
 
 To avoid creation of multiple objects, `generate{}` implementation defines `GeneratorIterator<T>` class that
-implements `Generator<T>` and also implements `Conitnuation<Unit>`, so it can serve both as 
+implements `Generator<T>` and also implements `Continuation<Unit>`, so it can serve both as 
 a `receiver` parameter for `createCoroutine` and as its `completion` continuation parameter. 
-The implementation for `GeneratorIterator<T>` is shown below:
+The simple implementation for `GeneratorIterator<T>` is shown below:
 
 ```kotlin
 private class GeneratorIterator<T>: AbstractIterator<T>(), Generator<T>, Continuation<Unit> {
@@ -686,7 +686,7 @@ Many asynchronous APIs have callback-style interfaces. The `suspendCoroutine` su
 from the standard library provides for
 an easy way to wrap any callback into a Kotlin suspending function. For example,
 `File.aRead()` function from [asynchronous computations](#asynchronous-computations) use case 
-can be implemented as suspending function on top of Java NIO 
+can be implemented as a suspending function on top of Java NIO 
 [`AsynchronousFileChannel`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html)
 and its 
 [`CompletionHandler`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/CompletionHandler.html)
@@ -766,11 +766,11 @@ interface AsyncThreadScope {
 This scope interface defines `async` and `sleep` to start sub-tasks in the same thread 
 and to efficiently sleep in a cooperative way. 
 The `@RestrictsSuspension` annotation on the scope interface is _not_ needed.
-We'll have _composability_ with arbitrary 3-rd party suspending functions, 
+We'll have _composability_ with arbitrary 3rd party suspending functions, 
 like asynchronous IO as shown in [wrapping callbacks](#wrapping-callbacks) section,
  with `await` suspending function as shown in [suspending functions](#suspending-functions) section, etc.
  
-In order to dispatch all suspensions inside the `asyncThread{}` coroutine into the thread, 
+In order to dispatch all suspensions inside the `asyncThread{}` coroutine into _the_ thread, 
 dispatcher is installed in a coroutine as explained in the [dispatcher](#dispatcher) section:
 
 
@@ -809,7 +809,7 @@ interface AsyncIterator<out T> {
 }
 ```
 
-The definition of `AsyncSequence` is similiar to a standard synchronous
+The definition of `AsyncSequence` is similiar to the standard synchronous
 [`Sequence`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.sequences/-sequence/index.html):
 
 ```kotlin
@@ -819,7 +819,7 @@ interface AsyncSequence<out T> {
 ```
 
 We also define a scope interface for asynchronous generators that is similar 
-to a scope of a synchronous generator, but is not restricted in its suspensions:
+to a scope of a synchronous generator, but it is not restricted in its suspensions:
 
 ```kotlin
 interface AsyncGenerator<in T> {
@@ -862,14 +862,14 @@ val seq = asyncGenerate {
 Now the consumer coroutine can consume this sequence at its own pace, while also 
 suspending with other arbitrary suspending functions. Note, that 
 Kotlin [for loops](https://kotlinlang.org/docs/reference/control-flow.html#for-loops)
-work by convention, so there is no need to for a special `await for` loop construct in the language.
+work by convention, so there is no need for a special `await for` loop construct in the language.
 The regular `for` loop can be used to iterate over an asynchronous sequence that we've defined
 above. It is suspended whenever producer does not have a value:
 
 
 ```kotlin
-for (value in seq) {
-    // do something with value here, may suspend without restrictions
+for (value in seq) { // suspend while waiting for producer
+    // do something with value here, may suspend here, too
 }
 ```
 
@@ -1059,7 +1059,7 @@ Using this implementation of non-blocking mutex
 [the 9th concurrency example of a tour of Go](https://tour.golang.org/concurrency/9)
 can be translated into Kotlin using Kotlin's
 [`try-finally`](https://kotlinlang.org/docs/reference/exceptions.html)
-that serves the same purposes as Go's `defer`:
+that serves the same purpose as Go's `defer`:
 
 ```kotlin
 class SafeCounter {
@@ -1082,7 +1082,7 @@ class SafeCounter {
 
 > You can checkout working code [here](examples/channel/channel-test-9.kt)
 
-### Advanced topics
+## Advanced topics
 
 This section covers some advanced topics dealing with resource management, concurrency, 
 and programming style.
@@ -1120,7 +1120,7 @@ sequenceOfLines("examples/sequenceOfLines.kt")
 > You can get full code [here](examples/sequenceOfLines.kt)
 
 It works as expected as long as you iterate the sequence returned by the `sequenceOfLines` function 
-completely. However, if you print just a few first lines from this file:
+completely. However, if you print just a few first lines from this file like here:
 
 ```kotlin
 sequenceOfLines("examples/sequenceOfLines.kt")
@@ -1128,7 +1128,7 @@ sequenceOfLines("examples/sequenceOfLines.kt")
         .forEach(::println)
 ```
 
-Then the coroutine resumes a few times to yield the first three lines and becomes _abandoned_.
+then the coroutine resumes a few times to yield the first three lines and becomes _abandoned_.
 It is Ok for the coroutine itself to be abandoned but not for the open file. The 
 [`use` function](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html) 
 will not have a chance to finish its execution and close the file. The file will be left open
@@ -1185,7 +1185,7 @@ and coroutine's dispatcher can override this decision and dispatch the coroutine
 There are different styles of asynchronous programming.
  
 Callbacks were discussed in [asynchronous computations](#asynchronous-computations) section and are generally
-the least convenient style that coroutines are designed to replace, as any callback-style API can be
+the least convenient style that coroutines are designed to replace. Any callback-style API can be
 wrapped into the corresponding suspending function as shown [here](#wrapping-callbacks). 
 
 Let us recap. For example, assume that you start with a hypothetical _blocking_ `sendEmail` function 
@@ -1250,9 +1250,9 @@ suspend fun sendEmail(emailArgs: EmailArgs): EmailResult =
 ```
 
 So, in some sense, these two styles are equivalent and are both definitely superior to callback style in their
-convenience. However, let us look deeper at a difference between `sendEmailAsync` and suspending `sendEmail`:
+convenience. However, let us look deeper at a difference between `sendEmailAsync` and suspending `sendEmail`.
 
-Let's compare how they **compose** first. Suspending function can be composted using 
+Let's compare how they **compose** first. Suspending functions can be composted using 
 `suspending` builder that is trivially implemented [here](examples/suspending.kt):
 
 ```kotlin
@@ -1282,7 +1282,7 @@ example,  the code still compiles and works, but it now does email sending proce
 asynchronously or even _concurrently_ with the rest of a larger business process, 
 thus potentially modifying some shared state and introducing some very hard to reproduce errors.
 On the contrary, suspending functions are _sequential by default_.
-With suspending functions whenever you need any concurrency, you explicitly express it in the source code with 
+With suspending functions, whenever you need any concurrency, you explicitly express it in the source code with 
 some kind of `async{}` or a similar coroutine builder invocation.
 
 Compare how these styles **scale** for a big project using many libraries. Suspending functions are  
@@ -1292,13 +1292,13 @@ function that returns its own kind of promise/future class and its own `await`-l
 
 Compare their **performance**. Suspending functions provide minimal overhead per invocation. 
 You can checkout [implementation details](#implementation-details) section.
-Async-style functions need to keep quite heavy promise/future abstraction in addition to all of that. 
-Promise/future must be always returned from async-style function invocation and it cannot be optimized away even 
-if the function is very short.
+Async-style functions need to keep quite heavy promise/future abstraction in addition to all of that suspending machinery. 
+Some future-like object instance must be always returned from async-style function invocation and it cannot be optimized away even 
+if the function is very short and simple. Async-style is not well-suited for very fine-grained decomposition.
 
 Compare their **interoperability** with JVM/JS code. Async-style functions are more interoperable with JVM/JS code that 
-uses a matching type of promise/future abstraction. In Java or JS they are just functions that return 
-promise/future. Suspending functions look strange from any language that does not support 
+uses a matching type of future-like abstraction. In Java or JS they are just functions that return a corresponding
+future-like object. Suspending functions look strange from any language that does not support 
 [continuation-passing-style](#continuation-passing-style) natively.
 However, you can see in the examples above how easy it is to convert any suspending function into an 
 async-style function for any given promise/future framework. So, you can write suspending function in Kotlin just once, 
@@ -1323,7 +1323,7 @@ of [`await` suspending function](#suspending-functions) looks like this:
 suspend fun <T> await(f: CompletableFuture<T>): T
 ```
 
-However, it's actual _implementation_ has the following signature after CPS transformation:
+However, it's actual _implementation_ has the following signature after _CPS transformation_:
 
 ```kotlin
 fun <T> await(f: CompletableFuture<T>, continuation: Continuation<T>): Any?
@@ -1346,11 +1346,12 @@ suspending functions regardless of how and when continuation is invoked.
 ### State machines
 
 It is crucial to implement coroutines efficiently, i.e. create as few classes and objects as possible.
-Many languages implement them through _state machines_, and in the case of Kotlin this approach results 
-in the compiler creating only one class per coroutine.   
+Many languages implement them through _state machines_ and Kotlin does the same. In the case of Kotlin 
+this approach results in the compiler creating only one class per suspending lambda that may
+have an arbitrary number of suspension points in its body.   
  
-Main idea: a coroutine is compiled to a state machine, where states correspond to suspension points. 
-Example: let's take a coroutine with two suspension points:
+Main idea: a suspending function is compiled to a state machine, where states correspond to suspension points. 
+Example: let's take a suspending block with two suspension points:
  
 ```kotlin
 val a = a()
@@ -1360,23 +1361,23 @@ val z = await(bar(a, y)) // suspension point #2
 c(z)
 ``` 
  
-For this coroutine there are three states:
+For this block of code there are three states:
  
  * initial (before any suspension point)
  * after the first suspension point
  * after the second suspension point
  
-Every state is an entry point to one of the continuations of this coroutine 
+Every state is an entry point to one of the continuations of this block 
 (the initial continuation continues from the very first line). 
  
 The code is compiled to an anonymous class that has a method implementing the state machine, 
 a field holding the current state of the state machine, and fields for local variables of 
 the coroutine that are shared between states (there may also be fields for the closure of 
-the coroutine, but in this case it is empty). Here's pseudo-Java code for the coroutine above
+the coroutine, but in this case it is empty). Here's pseudo-Java code for the block above
 that uses continuation passing style for invocation of suspending functions `await`:
   
 ``` java
-class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Cotinuation<Object> {
+class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Continuation<Object> {
     // The current state of the state machine
     int label = 0
     
@@ -1437,7 +1438,7 @@ while (x < 10) {
 is generated as
 
 ``` java
-class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Cotinuation<Object> {
+class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Continuation<Object> {
     // The current state of the state machine
     int label = 0
     
@@ -1472,8 +1473,8 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Cotinu
 
 The actual implementation of `suspendCoroutine` suspending function in the standard library is written in Kotlin
 itself and its source code is a available as a part of the standard library sources package. In order to provide for the
-safe and problem-free use of coroutines it wraps the actual continuation of the state machine's continuation 
-in an additional object on each suspension of coroutine. This is perfectly fine for truly asynchronous use cases
+safe and problem-free use of coroutines it wraps the actual continuation of the state machine 
+into an additional object on each suspension of coroutine. This is perfectly fine for truly asynchronous use cases
 like [asynchronous computations](#asynchronous-computations) and [futures](#futures), since the runtime costs of the 
 corresponding asynchronous primitives far outweigh the cost of an additional allocated object. However, for
 the [generators](#generators) use case this additional cost is prohibitive.
@@ -1495,7 +1496,8 @@ implementation attempts are typically [heisenbugs](https://en.wikipedia.org/wiki
 that defy attempts to find and reproduce them via tests. 
 
 Optimized version of `yield` via `CoroutineIntrinsics.suspendCoroutineOrReturn` is shown below.
-Because `yield` always suspends, the corresponding block always returns `CoroutineIntrinsics.SUSPENDED`.
+Because `yield` always suspends to pass the control back to the consumer of the sequence, 
+the corresponding block always returns `CoroutineIntrinsics.SUSPENDED`.
 
 ```kotlin
 // Generator implementation
