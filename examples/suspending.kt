@@ -1,5 +1,6 @@
-package channel
+package suspending
 
+import channel.go
 import kotlin.coroutines.CoroutineIntrinsics
 import kotlin.coroutines.startCoroutine
 

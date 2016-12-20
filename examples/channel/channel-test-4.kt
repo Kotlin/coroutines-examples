@@ -3,7 +3,7 @@ package channel.test4
 import channel.Channel
 import channel.SendChannel
 import channel.go
-import channel.suspending
+import suspending.suspending
 
 // https://tour.golang.org/concurrency/4
 

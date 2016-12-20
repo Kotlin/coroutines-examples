@@ -3,14 +3,14 @@ package channel.test2a
 import channel.Channel
 import channel.SendChannel
 import channel.go
-import channel.suspending
+import suspending.suspending
 import kotlin.system.measureTimeMillis
 
 suspend fun sum(s: List<Int>, c: SendChannel<Int>) = suspending {
     // simulate long-running CPU-consuming computation
     var sum = 0
     val time = measureTimeMillis {
-        kotlin.repeat(100_000_000) {
+        repeat(100_000_000) {
             for (v in s) {
                 sum += v
             }

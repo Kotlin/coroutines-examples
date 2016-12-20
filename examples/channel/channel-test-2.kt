@@ -3,7 +3,7 @@ package channel.test2
 import channel.Channel
 import channel.SendChannel
 import channel.go
-import channel.suspending
+import suspending.suspending
 
 suspend fun sum(s: List<Int>, c: SendChannel<Int>) = suspending {
     var sum = 0

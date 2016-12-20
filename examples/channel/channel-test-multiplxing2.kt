@@ -1,7 +1,11 @@
 package channel.multiplexing2
 
-import channel.*
+import channel.Channel
+import channel.ReceiveChannel
 import channel.boring.boring
+import channel.go
+import channel.select
+import suspending.suspending
 
 // https://talks.golang.org/2012/concurrency.slide#27
 

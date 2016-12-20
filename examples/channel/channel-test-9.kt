@@ -1,8 +1,8 @@
 package channel.test9
 
 import channel.go
-import channel.suspending
 import mutex.Mutex
+import suspending.suspending
 
 // https://tour.golang.org/concurrency/9
 

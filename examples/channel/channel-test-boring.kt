@@ -3,7 +3,7 @@ package channel.boring
 import channel.Channel
 import channel.ReceiveChannel
 import channel.go
-import channel.suspending
+import suspending.suspending
 import java.util.*
 
 // https://talks.golang.org/2012/concurrency.slide#25

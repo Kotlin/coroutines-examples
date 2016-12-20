@@ -1,5 +1,6 @@
 package channel
 
+import suspending.suspending
 import kotlin.coroutines.suspendCoroutine
 
 inline suspend fun <R> select(block: SelectorBuilder<R>.() -> Unit): R =

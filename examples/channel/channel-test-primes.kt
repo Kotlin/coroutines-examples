@@ -1,6 +1,10 @@
 package channel.primes
 
-import channel.*
+import channel.Channel
+import channel.ReceiveChannel
+import channel.SendChannel
+import channel.go
+import suspending.suspending
 
 // https://talks.golang.org/2012/concurrency.slide#53
 // http://golang.org/s/prime-sieve

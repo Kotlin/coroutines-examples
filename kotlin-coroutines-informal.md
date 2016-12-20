@@ -691,7 +691,6 @@ and its
 [`CompletionHandler`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/CompletionHandler.html)
 callback interface with the following code:
 
-
 ```kotlin
 suspend fun File.aRead(): ByteArray {
     val channel = AsynchronousFileChannel.open(toPath());
@@ -920,7 +919,7 @@ suspend fun fibonacci(n: Int, c: SendChannel<Int>) = suspending {
 }
 ```
 
-> Note, that we've also defined `suspending` builder [here](examples/channel/suspending.kt) to workaround 
+> Note, that we've also defined `suspending` builder [here](examples/suspending.kt) to workaround 
 for the current limitation of tail-only calls inside suspending functions. 
 
 We can also define Go-style `go {...}` block to start the new coroutine in some kind of 
@@ -1109,7 +1108,7 @@ fun sequenceOfLines(fileName: String) = generate<String> {
 }
 ```
 
-This function returns `Sequence<String>` and you can use this function to print all lines from a file 
+This function returns a `Sequence<String>` and you can use this function to print all lines from a file 
 in a natural way:
  
 ```kotlin
@@ -1129,9 +1128,9 @@ sequenceOfLines("examples/sequenceOfLines.kt")
 ```
 
 Then the coroutine resumes a few times to yield the first three lines and becomes _abandoned_.
-It is Ok for the coroutine itself to be abandoned but not for the open file, because the 
+It is Ok for the coroutine itself to be abandoned but not for the open file. The 
 [`use` function](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html) 
-will not have a chance to finish its execution and close the file. The will fill be left open
+will not have a chance to finish its execution and close the file. The file will be left open
 until collected by GC, because Java files have a `finalizer` that closes the file. It is 
 not a big problem for a small slide-ware or a short-running utility, but it may be a disaster for
 a large backend system with multi-gigabyte heap, that can run out of open file handles 
@@ -1139,16 +1138,16 @@ faster than it runs out of memory to trigger GC.
 
 This is a similar gotcha to Java's 
 [`Files.lines`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#lines-java.nio.file.Path-)
-method that produces a lazy stream of lines. It returns a closeable sequence, but most stream operation do not
+method that produces a lazy stream of lines. It returns a closeable Java stream, but most stream operations do not
 automatically invoke the corresponding 
 `Stream.close` method and it is up to the user to remember about the need to close the corresponding stream. 
 One can define closeable sequence generators 
-in Kotlin, but they will suffer from similar problem that no automatic mechanism in the language can
+in Kotlin, but they will suffer from a similar problem that no automatic mechanism in the language can
 ensure that they are closed after use. It is explicitly out of the scope of Kotlin coroutines
 to introduce a language mechanism for an automated resource management.
 
 However, usually this problem does not affect asynchronous use-cases of coroutines. An asynchronous coroutine 
-is never abandoned, but ultimately runs until its completions, so if the code inside a coroutine properly closes
+is never abandoned, but ultimately runs until its completion, so if the code inside a coroutine properly closes
 its resources, then they will be ultimately closed.
 
 ### Concurrency and threads
@@ -1159,24 +1158,147 @@ of code is perfectly safe inside a coroutine:
 ```kotlin
 async { // starts a coroutine
     val m = mutableMapOf<String, String>()
-    m["k1"] = await(someAsyncTask1()) // suspends on await
-    m["k2"] = await(someAsyncTask2()) // suspends on await
+    val v1 = await(someAsyncTask1()) // suspends on await
+    m["k1"] = v1 // modify map when resumed
+    val v2 = await(someAsyncTask2()) // suspends on await
+    m["k2"] = v2 // modify map when resumed
 }
 ```
 
 You can use all the regular single-threaded mutable structures inside the scope of a particular coroutine.
 However, sharing mutable state _between_ coroutines is potentially dangerous. If you use a coroutine builder
 that install a dispatcher to resume all coroutines JS-style in the single event-dispatch thread, 
-like the `asyncSwing{}`shown in [dispatcher](#dispatcher) section, then you can safely work with any shared
+like the `asyncSwing{}`shown in [dispatcher](#dispatcher) section, then you can safely work with all shared
 objects that are generally modified from this event-dispatch thread. 
 However, if you use mutli-threaded coroutine builder or otherwise share mutable state between 
-corutines running in different threads, then you have to use thread-safe (concurrent) data structures.
+coroutines running in different threads, then you have to use thread-safe (concurrent) data structures. 
 
 Coroutines are like threads, albeit they are more lightweight. You can have millions of coroutines running on 
-just a few threads. The running coroutine is always executed in some thread. However, a suspended coroutine
-does not consume a thread nor it is bound to a thread in any way. The suspending fuction that resumes this
+just a few threads. The running coroutine is always executed in some thread. However, a _suspended_ coroutine
+does not consume a thread and it is not bound to a thread in any way. The suspending fuction that resumes this
 coroutine decides which thread the coroutine is resumed on by invoking `Continuation.resume` on this thread 
-and coroutine's dispatcher can override this decision and dispatch the coroutine execution onto a different thread.
+and coroutine's dispatcher can override this decision and dispatch the coroutine's execution onto a different thread.
+
+## Asynchronous programming styles
+
+There are different styles of asynchronous programming.
+ 
+Callbacks were discussed in [asynchronous computations](#asynchronous-computations) section and are generally
+the least convenient style that coroutines are designed to replace, as any callback-style API can be
+wrapped into the corresponding suspending function as shown [here](#wrapping-callbacks). 
+
+Let us recapt. For example, assume that you start with a hypothetical _blocking_ `sendEmail` function 
+with the following signature:
+
+```kotlin
+fun sendEmail(emailArgs: EmailArgs): EmailResult
+```
+
+It blocks execution thread for potentially long time while it operates.
+You can use [node.js callback convention](https://www.tutorialspoint.com/nodejs/nodejs_callbacks_concept.htm)
+to represent its non-blocking version in callback-style with the following signature:
+
+```kotlin
+fun sendEmail(emailArgs: EmailArgs, callback: (EmailResult?, Throwable?) -> Unit)
+```
+
+However, coroutines enable different styles of asynchronous programming. One of them
+is `async`/`await` style that is built into many popular languages. 
+In Kotlin this style can be replicated by introducing `async{}` and `await()` library functions
+that were shown as a part of [futures](#futures) use-case section.
+ 
+This style is signified by the convention to return some kind of future object from the function instead 
+of taking a callback as a parameter. In this async-style the signature of `sendEmail` is going to look like this:
+
+```kotlin
+fun sendEmailAsync(emailArgs: EmailArgs): Future<EmailResult>
+```
+
+As a matter of style, it is a good practise to add `Async` suffix to such method names, because their 
+parameters are no different from a blocking version and it is quite easy to make a mistake of forgetting about
+asynchronous nature of their operation. The function `sendEmailAsync` starts a _concurrent_ asynchronous operation 
+and potentially brings with it all the pitfalls of concurrency, however languages that promotes this style of 
+programming also typically have some kind of `await` primitive to bring the execution back into the sequence as needed. 
+
+Kotlin's _native_ programming style is based on suspending functions. In this style, the signature of 
+`sendEmail` looks naturally, without any mangling to its parameters or return type but with an additional
+`suspend` modifier:
+
+```kotlin
+suspend fun sendEmail(emailArgs: EmailArgs): EmailResult
+```
+
+The async-style and suspending style can be easily coverted into one another using the primitives that we've 
+already seen. For example, `sendEmailAsync` can be implemented via suspending `sendEmail` using
+[`async` coroutine builder](#coroutine-builders):
+
+```kotlin
+fun sendEmailAsync(emailArgs: EmailArgs): Future<EmailResult> = async {
+    sendEmail(emailArgs)
+}
+```
+
+while suspending function `sendEmail` can be implemented via `sendEmailAsync` using
+[`await` suspending function](#suspending-function)
+
+```kotlin
+suspend fun sendEmail(emailArgs: EmailArgs): EmailResult = 
+    await(sendEmailAsync(emailArgs))
+```
+
+So, in some sense, these two styles are equivalent and are both definitely superior to callback style in their
+convenience. However, let us look deeper at a difference between `sendEmailAsync` and suspending `sendEmail`:
+
+Let's compare how they *compose* first. Suspending function can be composted using 
+`suspending` builder that is trivially implemented [here](#examples/suspending.kt):
+
+```kotlin
+suspend fun largerBusinessProcess() = suspending {
+    // a lot of code here, then somewhere inside
+    sendEmail(emailArgs)
+    // something else goes on after that
+}
+```
+
+> Note: the restriction on suspeding function invocation will be lifted in the future and
+`suspending{}` coroutine builder in this example will not be required.
+
+The corresponding async-style functions compose in this way:
+
+```kotlin
+fun largerBusinessProcessAsync() = async {
+   // a lot of code here, then somewhere inside
+   await(sendEmailAsync(emailArgs))
+   // something else goes on after that
+}
+```
+
+Observe, that async-style function composition is _error prone_. If you omit `await(...)` invocation in async-style 
+example,  the code still compiles and works, but it now does email sending process 
+asynchronously or even _concurrently_ with the rest of a larger business process, 
+thus potentially modifying some shared state and introducing some very hard to reproduce errors.
+On the contrary, suspending functions are _sequential by default_.
+With suspending functions whenever you need any concurrency, you explicitly express it in the source code with 
+some kind of `async{}` or a similar coroutine builder invocation.
+
+Compare how these styles *scale* for a big project using many libraries. Suspending functions are  
+a _core language_ concept in Kotlin. All suspending functions are fully usable in any unrestricted Kotlin coroutine.
+Async-style functions are framework-dependent. Every promises/futures framework must define its own `async`-like 
+function that returns its own kind of promise/future class.
+
+Compare their *performance*. Suspending functions provide minimal overhead per invocation. 
+You can checkout [Implementation details](#implementation-details) section.
+Async-styloe functions need to keep quite heavy promise/future abstraction in addition to all of that. 
+Promise/future is always returned form async-style function invocation and it cannot be optimized away.
+
+Compare their *interoperability* with JVM/JS code. Async-style functions are more interoperable with JVM/JS code that 
+uses a matching type of promise/future abstraction. In Java or JS they are just functions that return 
+promise/future. Suspending functions look strange from any language that does not support 
+[continuation-passing-style](#continuation-passing-style) natively.
+However, as a workaround, see in the examples above how easy it is to convert any suspending function into an 
+async-style function for any given promise/future framework. So you, can write suspending function in Kotlin just once, 
+and then adapt them for interop with any style of promise/future with one line of code using an appropriate 
+`async{}` coroutine builder function. 
 
 ## Implementation details
 

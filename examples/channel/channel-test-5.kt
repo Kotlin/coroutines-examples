@@ -1,6 +1,7 @@
 package channel.test5
 
 import channel.*
+import suspending.suspending
 
 // https://tour.golang.org/concurrency/5
 
