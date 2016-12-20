@@ -44,6 +44,7 @@ Goals:
 * [Advanced topics](#advanced-topics)
   * [Resource management and GC](#resource-management-and-gc)
   * [Concurrency and threads](#concurrency-and-threads)
+  * [Asynchronous programming styles](#asynchronous-programming-styles)
 * [Implementation details](#implementation-details)
   * [Continuation passing style](#continuation-passing-style)
   * [State machines](#state-machines)
