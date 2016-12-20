@@ -41,6 +41,9 @@ Goals:
   * [Asynchronous sequences](#asynchronous-sequences)
   * [Channels](#channels)
   * [Mutexes](#mutexes)
+* [Advanced topics](#advanced-topics)
+  * [Resource management and GC](#resource-management-and-gc)
+  * [Concurrency and threads](#concurrency-and-threads)
 * [Implementation details](#implementation-details)
   * [Continuation passing style](#continuation-passing-style)
   * [State machines](#state-machines)
@@ -1078,6 +1081,102 @@ class SafeCounter {
 ```
 
 > You can checkout working code [here](examples/channel/channel-test-9.kt)
+
+### Advanced topics
+
+This section covers some advanced topics dealing with resource management, concurrency, 
+and programming style.
+
+### Resource management and GC
+
+Coroutines don't use any off-heap storage and do not consume any native resources by themselves, unless the code
+that is running inside a coroutine does open a file or some other resource. While files opened in a coroutine must
+be closed somehow, the coroutine itself does not need to be closed. When coroutine is suspended its whole state is 
+available by the reference to its continuation. If you loose the reference to suspended coroutine's continuation,
+then it will be ultimately collected by garbage collector.
+
+Coroutines that open some closeable resources deserve a special attention. Consider the following coroutine
+that uses the `generate{}` builder from [restricted suspension](#restricted-suspension) section to produce
+a sequence of lines from a file:
+
+```kotlin
+fun sequenceOfLines(fileName: String) = generate<String> {
+    BufferedReader(FileReader(fileName)).use {
+        while (true) {
+            yield(it.readLine() ?: break)
+        }
+    }
+}
+```
+
+This function returns `Sequence<String>` and you can use this function to print all lines from a file 
+in a natural way:
+ 
+```kotlin
+sequenceOfLines("examples/sequenceOfLines.kt")
+    .forEach(::println)
+```
+
+> You can get full code [here](examples/sequenceOfLines.kt)
+
+It works as expected as long as you iterate the sequence returned by the `sequenceOfLines` function 
+completely. However, if you print just a few first lines from this file:
+
+```kotlin
+sequenceOfLines("examples/sequenceOfLines.kt")
+        .take(3)
+        .forEach(::println)
+```
+
+Then the coroutine resumes a few times to yield the first three lines and becomes _abandoned_.
+It is Ok for the coroutine itself to be abandoned but not for the open file, because the 
+[`use` function](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.io/use.html) 
+will not have a chance to finish its execution and close the file. The will fill be left open
+until collected by GC, because Java files have a `finalizer` that closes the file. It is 
+not a big problem for a small slide-ware or a short-running utility, but it may be a disaster for
+a large backend system with multi-gigabyte heap, that can run out of open file handles 
+faster than it runs out of memory to trigger GC.
+
+This is a similar gotcha to Java's 
+[`Files.lines`](https://docs.oracle.com/javase/8/docs/api/java/nio/file/Files.html#lines-java.nio.file.Path-)
+method that produces a lazy stream of lines. It returns a closeable sequence, but most stream operation do not
+automatically invoke the corresponding 
+`Stream.close` method and it is up to the user to remember about the need to close the corresponding stream. 
+One can define closeable sequence generators 
+in Kotlin, but they will suffer from similar problem that no automatic mechanism in the language can
+ensure that they are closed after use. It is explicitly out of the scope of Kotlin coroutines
+to introduce a language mechanism for an automated resource management.
+
+However, usually this problem does not affect asynchronous use-cases of coroutines. An asynchronous coroutine 
+is never abandoned, but ultimately runs until its completions, so if the code inside a coroutine properly closes
+its resources, then they will be ultimately closed.
+
+### Concurrency and threads
+
+Each individual coroutine, just like a thread, is executed sequentially. It means that the following kind 
+of code is perfectly safe inside a coroutine:
+
+```kotlin
+async { // starts a coroutine
+    val m = mutableMapOf<String, String>()
+    m["k1"] = await(someAsyncTask1()) // suspends on await
+    m["k2"] = await(someAsyncTask2()) // suspends on await
+}
+```
+
+You can use all the regular single-threaded mutable structures inside the scope of a particular coroutine.
+However, sharing mutable state _between_ coroutines is potentially dangerous. If you use a coroutine builder
+that install a dispatcher to resume all coroutines JS-style in the single event-dispatch thread, 
+like the `asyncSwing{}`shown in [dispatcher](#dispatcher) section, then you can safely work with any shared
+objects that are generally modified from this event-dispatch thread. 
+However, if you use mutli-threaded coroutine builder or otherwise share mutable state between 
+corutines running in different threads, then you have to use thread-safe (concurrent) data structures.
+
+Coroutines are like threads, albeit they are more lightweight. You can have millions of coroutines running on 
+just a few threads. The running coroutine is always executed in some thread. However, a suspended coroutine
+does not consume a thread nor it is bound to a thread in any way. The suspending fuction that resumes this
+coroutine decides which thread the coroutine is resumed on by invoking `Continuation.resume` on this thread 
+and coroutine's dispatcher can override this decision and dispatch the coroutine execution onto a different thread.
 
 ## Implementation details
 
