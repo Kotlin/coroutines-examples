@@ -400,7 +400,7 @@ Here's is the definition of the standard library interface `Continuation`, which
 a generic callback:
 
 ```kotlin
-interface Continuation<T> {
+interface Continuation<in T> {
    fun resume(value: T)
    fun resumeWithException(exception: Throwable)
 }
@@ -1188,7 +1188,7 @@ Callbacks were discussed in [asynchronous computations](#asynchronous-computatio
 the least convenient style that coroutines are designed to replace, as any callback-style API can be
 wrapped into the corresponding suspending function as shown [here](#wrapping-callbacks). 
 
-Let us recapt. For example, assume that you start with a hypothetical _blocking_ `sendEmail` function 
+Let us recap. For example, assume that you start with a hypothetical _blocking_ `sendEmail` function 
 with the following signature:
 
 ```kotlin
@@ -1196,14 +1196,16 @@ fun sendEmail(emailArgs: EmailArgs): EmailResult
 ```
 
 It blocks execution thread for potentially long time while it operates.
-You can use [node.js callback convention](https://www.tutorialspoint.com/nodejs/nodejs_callbacks_concept.htm)
+
+To make it non-blocking you can use, for example, error-first 
+[node.js callback convention](https://www.tutorialspoint.com/nodejs/nodejs_callbacks_concept.htm)
 to represent its non-blocking version in callback-style with the following signature:
 
 ```kotlin
-fun sendEmail(emailArgs: EmailArgs, callback: (EmailResult?, Throwable?) -> Unit)
+fun sendEmail(emailArgs: EmailArgs, callback: (Throwable?, EmailResult?) -> Unit)
 ```
 
-However, coroutines enable different styles of asynchronous programming. One of them
+However, coroutines enable other styles of asynchronous non-blocking programming. One of them
 is `async`/`await` style that is built into many popular languages. 
 In Kotlin this style can be replicated by introducing `async{}` and `await()` library functions
 that were shown as a part of [futures](#futures) use-case section.
@@ -1218,7 +1220,7 @@ fun sendEmailAsync(emailArgs: EmailArgs): Future<EmailResult>
 As a matter of style, it is a good practise to add `Async` suffix to such method names, because their 
 parameters are no different from a blocking version and it is quite easy to make a mistake of forgetting about
 asynchronous nature of their operation. The function `sendEmailAsync` starts a _concurrent_ asynchronous operation 
-and potentially brings with it all the pitfalls of concurrency, however languages that promotes this style of 
+and potentially brings with it all the pitfalls of concurrency. However, languages that promote this style of 
 programming also typically have some kind of `await` primitive to bring the execution back into the sequence as needed. 
 
 Kotlin's _native_ programming style is based on suspending functions. In this style, the signature of 
@@ -1229,7 +1231,7 @@ Kotlin's _native_ programming style is based on suspending functions. In this st
 suspend fun sendEmail(emailArgs: EmailArgs): EmailResult
 ```
 
-The async-style and suspending style can be easily coverted into one another using the primitives that we've 
+The async and suspending styles can be easily converted into one another using the primitives that we've 
 already seen. For example, `sendEmailAsync` can be implemented via suspending `sendEmail` using
 [`async` coroutine builder](#coroutine-builders):
 
@@ -1240,7 +1242,7 @@ fun sendEmailAsync(emailArgs: EmailArgs): Future<EmailResult> = async {
 ```
 
 while suspending function `sendEmail` can be implemented via `sendEmailAsync` using
-[`await` suspending function](#suspending-function)
+[`await` suspending function](#suspending-functions)
 
 ```kotlin
 suspend fun sendEmail(emailArgs: EmailArgs): EmailResult = 
@@ -1250,8 +1252,8 @@ suspend fun sendEmail(emailArgs: EmailArgs): EmailResult =
 So, in some sense, these two styles are equivalent and are both definitely superior to callback style in their
 convenience. However, let us look deeper at a difference between `sendEmailAsync` and suspending `sendEmail`:
 
-Let's compare how they *compose* first. Suspending function can be composted using 
-`suspending` builder that is trivially implemented [here](#examples/suspending.kt):
+Let's compare how they **compose** first. Suspending function can be composted using 
+`suspending` builder that is trivially implemented [here](examples/suspending.kt):
 
 ```kotlin
 suspend fun largerBusinessProcess() = suspending {
@@ -1261,7 +1263,7 @@ suspend fun largerBusinessProcess() = suspending {
 }
 ```
 
-> Note: the restriction on suspeding function invocation will be lifted in the future and
+> Note: the restriction on suspending function invocation will be lifted in the future and
 `suspending{}` coroutine builder in this example will not be required.
 
 The corresponding async-style functions compose in this way:
@@ -1274,7 +1276,8 @@ fun largerBusinessProcessAsync() = async {
 }
 ```
 
-Observe, that async-style function composition is _error prone_. If you omit `await(...)` invocation in async-style 
+Observe, that async-style function composition is more verbose and _error prone_. 
+If you omit `await(...)` invocation in async-style 
 example,  the code still compiles and works, but it now does email sending process 
 asynchronously or even _concurrently_ with the rest of a larger business process, 
 thus potentially modifying some shared state and introducing some very hard to reproduce errors.
@@ -1282,23 +1285,24 @@ On the contrary, suspending functions are _sequential by default_.
 With suspending functions whenever you need any concurrency, you explicitly express it in the source code with 
 some kind of `async{}` or a similar coroutine builder invocation.
 
-Compare how these styles *scale* for a big project using many libraries. Suspending functions are  
-a _core language_ concept in Kotlin. All suspending functions are fully usable in any unrestricted Kotlin coroutine.
+Compare how these styles **scale** for a big project using many libraries. Suspending functions are  
+a light-weight language concept in Kotlin. All suspending functions are fully usable in any unrestricted Kotlin coroutine.
 Async-style functions are framework-dependent. Every promises/futures framework must define its own `async`-like 
-function that returns its own kind of promise/future class.
+function that returns its own kind of promise/future class and its own `await`-like function, too.
 
-Compare their *performance*. Suspending functions provide minimal overhead per invocation. 
-You can checkout [Implementation details](#implementation-details) section.
-Async-styloe functions need to keep quite heavy promise/future abstraction in addition to all of that. 
-Promise/future is always returned form async-style function invocation and it cannot be optimized away.
+Compare their **performance**. Suspending functions provide minimal overhead per invocation. 
+You can checkout [implementation details](#implementation-details) section.
+Async-style functions need to keep quite heavy promise/future abstraction in addition to all of that. 
+Promise/future must be always returned from async-style function invocation and it cannot be optimized away even 
+if the function is very short.
 
-Compare their *interoperability* with JVM/JS code. Async-style functions are more interoperable with JVM/JS code that 
+Compare their **interoperability** with JVM/JS code. Async-style functions are more interoperable with JVM/JS code that 
 uses a matching type of promise/future abstraction. In Java or JS they are just functions that return 
 promise/future. Suspending functions look strange from any language that does not support 
 [continuation-passing-style](#continuation-passing-style) natively.
-However, as a workaround, see in the examples above how easy it is to convert any suspending function into an 
-async-style function for any given promise/future framework. So you, can write suspending function in Kotlin just once, 
-and then adapt them for interop with any style of promise/future with one line of code using an appropriate 
+However, you can see in the examples above how easy it is to convert any suspending function into an 
+async-style function for any given promise/future framework. So, you can write suspending function in Kotlin just once, 
+and then adapt it for interop with any style of promise/future with one line of code using an appropriate 
 `async{}` coroutine builder function. 
 
 ## Implementation details
