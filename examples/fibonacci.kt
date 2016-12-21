@@ -1,6 +1,7 @@
 import generate.generate
 
-val fibonacci: Sequence<Int> = generate {
+// inferred type is Sequence<Int>
+val fibonacci = generate {
     yield(1) // first Fibonacci number
     var cur = 1
     var next = 1
