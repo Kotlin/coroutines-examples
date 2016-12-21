@@ -6,75 +6,16 @@
         <option name="compilerInfo">
           <KotlinCompilerInfo>
             <option name="compilerSettings">
-              <CompilerSettings>
-                <option name="additionalArguments" value="-version" />
-                <option name="copyJsLibraryFiles" value="true" />
-                <option name="outputDirectoryForJsLibraryFiles" value="lib" />
-                <option name="scriptTemplates" value="" />
-                <option name="scriptTemplatesClasspath" value="" />
-              </CompilerSettings>
+              <CompilerSettings />
             </option>
             <option name="k2jsCompilerArguments">
               <K2JSCompilerArguments>
-                <option name="outputFile" />
-                <option name="noStdlib" value="false" />
-                <option name="libraryFiles" />
-                <option name="sourceMap" value="false" />
-                <option name="metaInfo" value="false" />
-                <option name="kjsm" value="false" />
-                <option name="target" />
                 <option name="moduleKind" value="plain" />
-                <option name="main" />
-                <option name="outputPrefix" />
-                <option name="outputPostfix" />
-                <option name="languageVersion" />
-                <option name="apiVersion" />
-                <option name="suppressWarnings" value="false" />
-                <option name="verbose" value="false" />
-                <option name="version" value="false" />
-                <option name="help" value="false" />
-                <option name="extraHelp" value="false" />
-                <option name="noInline" value="false" />
-                <option name="repeat" />
-                <option name="pluginClasspaths" />
-                <option name="multiPlatform" value="false" />
-                <option name="noCheckImpl" value="false" />
-                <option name="coroutinesWarn" value="false" />
-                <option name="coroutinesError" value="false" />
-                <option name="coroutinesEnable" value="false" />
-                <option name="pluginOptions" />
-                <option name="freeArgs">
-                  <list />
-                </option>
-                <option name="unknownExtraFlags">
-                  <list />
-                </option>
               </K2JSCompilerArguments>
             </option>
             <option name="_commonCompilerArguments">
               <DummyImpl>
-                <option name="languageVersion" />
-                <option name="apiVersion" />
-                <option name="suppressWarnings" value="false" />
-                <option name="verbose" value="false" />
-                <option name="version" value="false" />
-                <option name="help" value="false" />
-                <option name="extraHelp" value="false" />
-                <option name="noInline" value="false" />
-                <option name="repeat" />
-                <option name="pluginClasspaths" />
-                <option name="multiPlatform" value="false" />
-                <option name="noCheckImpl" value="false" />
-                <option name="coroutinesWarn" value="false" />
-                <option name="coroutinesError" value="false" />
                 <option name="coroutinesEnable" value="true" />
-                <option name="pluginOptions" />
-                <option name="freeArgs">
-                  <list />
-                </option>
-                <option name="unknownExtraFlags">
-                  <list />
-                </option>
               </DummyImpl>
             </option>
           </KotlinCompilerInfo>
