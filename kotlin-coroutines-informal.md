@@ -264,7 +264,7 @@ makeAsyncRequest {
     // this lambda is executed when the async request completes
     result, exception ->
     
-    if (exception != null) {
+    if (exception == null) {
         // display result in UI
         SwingUtilities.invokeLater {
             display(result)   
