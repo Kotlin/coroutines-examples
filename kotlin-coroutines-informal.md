@@ -223,8 +223,8 @@ val seq = generate {
     yield(firstItem) // suspension point
 
     for (item in input) {
-        if (!it.isValid()) break // don't generate any more items
-        val foo = it.toFoo()
+        if (!item.isValid()) break // don't generate any more items
+        val foo = item.toFoo()
         if (!foo.isGood()) continue
         yield(foo) // suspension point        
     }
