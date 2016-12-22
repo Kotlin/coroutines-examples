@@ -1,5 +1,6 @@
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.coroutines.Continuation
@@ -138,7 +139,7 @@ fun main(args: Array<String>) {
             2
         }
         log("I'll wait for both f1 and f2. It should take just a second!")
-        val sum = await(f1) + await(f2)
+        val sum = f1.await() + f2.await()
         log("And the sum is $sum")
     }
     f.get()

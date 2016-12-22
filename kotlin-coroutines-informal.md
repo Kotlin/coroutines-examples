@@ -172,15 +172,15 @@ async {
     ...
     // suspend while awaiting the loading of the images
     // then run `applyOverlay(...)` when they are both loaded
-    return applyOverlay(await(original), await(overlay))
+    return applyOverlay(original.await(), overlay.await())
 }
 ```
 
 > The library code for `async{}` is shown in [coroutine builders](#coroutine-builders) section, and
-the library code for `await()` is shown in [suspending functions](#suspending-functions) section.
+the library code for `.await()` is shown in [suspending functions](#suspending-functions) section.
 
 Again, less indentation and more natural composition logic (and exception handling, not shown here), 
-and no building async/await into the language: `async{}` and `await()` are functions in a library. 
+and no building async/await into the language: `async{}` and `.await()` are functions in a library. 
 
 ### Generators
 
@@ -321,7 +321,7 @@ Moreover, like a future or promise, it may _complete_ with some result or except
 * A _suspending function_ — a function that is marked with `suspend` modifier. It may _suspend_ execution of the code
   without blocking the current thread of execution by invoking other suspending functions. A suspending function 
   cannot be invoked from a regular code, but only from other suspending functions and from suspending lambdas (see below).
-  For example, `await()` and `yield()`, as shown in [use cases](#use-cases), are suspending functions that may 
+  For example, `.await()` and `yield()`, as shown in [use cases](#use-cases), are suspending functions that may 
   be defined in a library. The standard library provides primitive suspending functions that are used to define 
   all other suspending functions.
   
@@ -409,12 +409,12 @@ interface Continuation<in T> {
 
 ### Suspending functions
 
-An implementation of a typical _suspending function_ like `await` looks like this:
+An implementation of a typical _suspending function_ like `.await()` looks like this:
   
 ```kotlin
-suspend fun <T> await(f: CompletableFuture<T>): T =
+suspend fun <T> CompletableFuture<T>.await(): T =
     suspendCoroutine<T> { c: Continuation<T> ->
-        f.whenComplete { result, exception ->
+        whenComplete { result, exception ->
             if (exception == null) // the future has been completed normally
                 c.resume(result) 
             else // the future has completed with an exception
@@ -425,10 +425,25 @@ suspend fun <T> await(f: CompletableFuture<T>): T =
 
 > You can get this code [here](examples/await.kt)  
 
-The `suspend` modifier indicates that this is a function that can suspend execution of a coroutine. 
+The `suspend` modifier indicates that this is a function that can suspend execution of a coroutine.
+This particular function is defined as an 
+[extension function](https://kotlinlang.org/docs/reference/extensions.html)
+on `CompletableFuture<T>` type so that its usage reads naturally in the left-to-right order
+that corresponds to the actual order of execution:
+
+```kotlin
+asyncOperation(...).await()
+```
+ 
+A modifier `suspend` may be used on any function: top-level function, extension function, member function, 
+constructor, or operator function.
+
+> Note, in the current release local functions and property getters/setters cannot have `suspend` modifier.
+ This restriction will be lifted in the future.
+ 
 Suspending functions may invoke any regular functions, but to actually suspend execution they must
 invoke some other suspending function. In particular, this `await` implementation invokes a suspending function 
-`suspendCoroutine` that is defined in the standard library in the following way:
+`suspendCoroutine` that is defined in the standard library as a top-level suspending function in the following way:
 
 ```kotlin
 suspend fun <T> suspendCoroutine(block: (Continuation<T>) -> Unit): T
@@ -450,7 +465,7 @@ captured in continuation, so that its clone can be resumed again. This mechanism
 provided by the standard library in the future.
 
 The value passed to `continuation.resume()` becomes the **return value** of `suspendCoroutine()`,
-which, in turn, becomes the return value of `await()` when the coroutine _resumes_ its execution.
+which, in turn, becomes the return value of `.await()` when the coroutine _resumes_ its execution.
 
 ### Coroutine builders
 
@@ -508,9 +523,9 @@ First of all, we need to fully understand the lifecycle of a coroutine. Consider
 ```kotlin
 async {
     initialCode() // execution of initial code
-    await(...) // suspension point #1
+    f1.await() // suspension point #1
     block1() // execution #1
-    await(...) // suspension point #2
+    f2.await() // suspension point #2
     block2() // execution #2
 }
 ```
@@ -749,7 +764,7 @@ asyncThread("MyEventThread") {
         2
     }
     log("I'll wait for both f1 and f2. It should take just a second!")
-    val sum = await(f1) + await(f2)
+    val sum = f1.await() + f2.await()
     log("And the sum is $sum")
 }
 ```
@@ -769,7 +784,7 @@ and to efficiently sleep in a cooperative way.
 The `@RestrictsSuspension` annotation on the scope interface is _not_ needed.
 We'll have _composability_ with arbitrary 3rd party suspending functions, 
 like asynchronous IO as shown in [wrapping callbacks](#wrapping-callbacks) section,
- with `await` suspending function as shown in [suspending functions](#suspending-functions) section, etc.
+ with `.await()` suspending function as shown in [suspending functions](#suspending-functions) section, etc.
  
 In order to dispatch all suspensions inside the `asyncThread{}` coroutine into _the_ thread, 
 dispatcher is installed in a coroutine as explained in the [dispatcher](#dispatcher) section:
@@ -1160,9 +1175,9 @@ of code is perfectly safe inside a coroutine:
 ```kotlin
 async { // starts a coroutine
     val m = mutableMapOf<String, String>()
-    val v1 = await(someAsyncTask1()) // suspends on await
+    val v1 = someAsyncTask1().await() // suspends on await
     m["k1"] = v1 // modify map when resumed
-    val v2 = await(someAsyncTask2()) // suspends on await
+    val v2 = someAsyncTask2().await() // suspends on await
     m["k2"] = v2 // modify map when resumed
 }
 ```
@@ -1208,7 +1223,7 @@ fun sendEmail(emailArgs: EmailArgs, callback: (Throwable?, EmailResult?) -> Unit
 
 However, coroutines enable other styles of asynchronous non-blocking programming. One of them
 is `async`/`await` style that is built into many popular languages. 
-In Kotlin this style can be replicated by introducing `async{}` and `await()` library functions
+In Kotlin this style can be replicated by introducing `async{}` and `.await()` library functions
 that were shown as a part of [futures](#futures) use-case section.
  
 This style is signified by the convention to return some kind of future object from the function instead 
@@ -1243,11 +1258,11 @@ fun sendEmailAsync(emailArgs: EmailArgs): Future<EmailResult> = async {
 ```
 
 while suspending function `sendEmail` can be implemented via `sendEmailAsync` using
-[`await` suspending function](#suspending-functions)
+[`.await()` suspending function](#suspending-functions)
 
 ```kotlin
 suspend fun sendEmail(emailArgs: EmailArgs): EmailResult = 
-    await(sendEmailAsync(emailArgs))
+    sendEmailAsync(emailArgs).await()
 ```
 
 So, in some sense, these two styles are equivalent and are both definitely superior to callback style in their
@@ -1272,13 +1287,13 @@ The corresponding async-style functions compose in this way:
 ```kotlin
 fun largerBusinessProcessAsync() = async {
    // a lot of code here, then somewhere inside
-   await(sendEmailAsync(emailArgs))
+   sendEmailAsync(emailArgs).await()
    // something else goes on after that
 }
 ```
 
 Observe, that async-style function composition is more verbose and _error prone_. 
-If you omit `await(...)` invocation in async-style 
+If you omit `.await()` invocation in async-style 
 example,  the code still compiles and works, but it now does email sending process 
 asynchronously or even _concurrently_ with the rest of a larger business process, 
 thus potentially modifying some shared state and introducing some very hard to reproduce errors.
@@ -1321,13 +1336,13 @@ parameter that is implicitly passed to it when it is invoked. Recall, that a dec
 of [`await` suspending function](#suspending-functions) looks like this:
 
 ```kotlin
-suspend fun <T> await(f: CompletableFuture<T>): T
+suspend fun <T> CompletableFuture<T>.await(): T
 ```
 
 However, it's actual _implementation_ has the following signature after _CPS transformation_:
 
 ```kotlin
-fun <T> await(f: CompletableFuture<T>, continuation: Continuation<T>): Any?
+fun <T> CompletableFuture<T>.await(continuation: Continuation<T>): Any?
 ```
 
 Its result type `T` had moved into a position of type argument in its additional continuation parameter.
@@ -1356,9 +1371,9 @@ Example: let's take a suspending block with two suspension points:
  
 ```kotlin
 val a = a()
-val y = await(foo(a)) // suspension point #1
+val y = foo(a).await() // suspension point #1
 b()
-val z = await(bar(a, y)) // suspension point #2
+val z = bar(a, y).await() // suspension point #2
 c(z)
 ``` 
  
@@ -1396,17 +1411,17 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
         // data is expected to be `null` at this invocation
         a = a()
         label = 1
-        data = await(foo(a), this) // 'this' is passed as a continuation 
+        data = foo(a).await(this) // 'this' is passed as a continuation 
         if (data == SUSPENDED) return // return if await had suspended execution
       L1:
-        // external code has resumed this coroutine passing the result of await() as data 
+        // external code has resumed this coroutine passing the result of .await() as data 
         y = (Y) data
         b()
         label = 2
-        data = await(bar(a, y), this) // 'this' is passed as a continuation
+        data = bar(a, y).await(this) // 'this' is passed as a continuation
         if (data == SUSPENDED) return // return if await had suspended execution
       L2:
-        // external code has resumed this coroutine passing the result of await() as data 
+        // external code has resumed this coroutine passing the result of .await() as data 
         Z z = (Z) data
         c(z)
         label = -1 // No more steps are allowed
@@ -1419,10 +1434,10 @@ Note that there is a `goto` operator and labels, because the example depicts wha
 byte code, not in the source code.
 
 Now, when the coroutine is started, we call its `resume()` — `label` is `0`, 
-and we jump to `L0`, then we do some work, set the `label` to the next state — `1`, call `await()` 
+and we jump to `L0`, then we do some work, set the `label` to the next state — `1`, call `.await()` 
 and return if the execution of the coroutine was suspended. 
 When we want to continue the execution, we call `resume()` again, and now it proceeds right to 
-`L1`, does some work, sets the state to `2`, calls `await()` and again returns in case of suspension. 
+`L1`, does some work, sets the state to `2`, calls `.await()` and again returns in case of suspension. 
 Next time it continues from `L3` setting the state to `-1` which means 
 "over, no more work to do". 
 
@@ -1432,7 +1447,7 @@ because loops also work through (conditional) `goto`:
 ```kotlin
 var x = 0
 while (x < 10) {
-    x += await(nextNumber())
+    x += nextNumber().await()
 }
 ```
 
@@ -1456,10 +1471,10 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
       LOOP:
         if (x > 10) goto END
         label = 1
-        data = await(nextNumber(), this) // 'this' is passed as a continuation 
+        data = nextNumber().await(this) // 'this' is passed as a continuation 
         if (data == SUSPENDED) return // return if await had suspended execution
       L1:
-        // external code has resumed this coroutine passing the result of await() as data 
+        // external code has resumed this coroutine passing the result of .await() as data 
         x += ((Integer) data).intValue()
         label = -1
         goto LOOP
