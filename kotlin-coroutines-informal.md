@@ -37,6 +37,7 @@ Goals:
   * [Restricted suspension](#restricted-suspension)
 * [More examples](#more-examples)
   * [Wrapping callbacks](#wrapping-callbacks)
+  * [Non-blocking sleep](#non-blocking-sleep)
   * [Cooperative single-thread multitasking](#cooperative-single-thread-multitasking)
   * [Asynchronous sequences](#asynchronous-sequences)
   * [Channels](#channels)
@@ -259,7 +260,7 @@ etc.
 Here is a snippet of code from a typical Swing application that does some asynchronous
 operation and then displays its result in the UI:
 
-``` kolin
+```kotlin
 makeAsyncRequest {
     // this lambda is executed when the async request completes
     result, exception ->
@@ -278,8 +279,8 @@ makeAsyncRequest {
 This is similar to callback hell that we've seen in [asynchronous computations](#asynchronous-computations) use case
 and it is elegantly solved by coroutines, too:
  
-```
-asyncSwing {
+```kotlin
+async(Swing) {
     try {
         // suspend while asynchronously making request
         val result = makeRequest()
@@ -291,7 +292,7 @@ asyncSwing {
 }
 ```
  
- > The library code for `asyncSwing {}` is shown in the [dispatcher](#dispatcher) section.
+> The library code for `Swing` dispatcher is shown in the [dispatcher](#dispatcher) section.
  
 All exception handling is performed using natural language constructs. 
 
@@ -488,7 +489,7 @@ fun <T> async(block: suspend () -> T): CompletableFuture<T> {
 }
 ```
 
-> You can get this code [here](examples/async.kt)  
+> You can get this code [here](examples/async0.kt)  
 
 Normally, a coroutine builder function uses some class like Future, Sequence, AsyncTask or alike 
 to return the result of the completed coroutine.
@@ -540,10 +541,9 @@ resumption of its _initial continuation_. The standard library provides the foll
  
  ```kotlin
 interface ContinuationDispatcher {
-     fun <T> dispatchResume(value: T, continuation: Continuation<T>): Boolean = false
-     fun dispatchResumeWithException(exception: Throwable, continuation: Continuation<*>): Boolean = false
+     fun <T> dispatchResume(value: T, continuation: Continuation<T>): Boolean
+     fun dispatchResumeWithException(exception: Throwable, continuation: Continuation<*>): Boolean
  }
-
  ```
  
  The `dispatchResume` function wraps the execution of the coroutine from its resumption with some value to 
@@ -554,10 +554,10 @@ interface ContinuationDispatcher {
  responsibility of the dispatcher to invoke `continuation.resume` or `continuation.resumeWithException`
  correspondingly.
  
- Here is an example code for `SwingDispatcher`:
+ Here is an example code for `Swing` dispatcher:
   
  ```kotlin
- object SwingDispatcher : ContinuationDispatcher {
+ object Swing : ContinuationDispatcher {
      override fun <T> dispatchResume(value: T, continuation: Continuation<T>): Boolean {
          if (SwingUtilities.isEventDispatchThread()) return false
          SwingUtilities.invokeLater { continuation.resume(value) }
@@ -572,31 +572,26 @@ interface ContinuationDispatcher {
  }
  ``` 
  
- If the execution already happens in UI thread, then `SwingDispatcher` just returns `false`, otherwise it dispatches
- execution of the continuation onto Swing UI thread until its next suspension. Using this dispatcher, it is
- straightforward to implement `asyncSwing` coroutine builder that was 
- shown in [asynchronous UI](#asynchronous-ui) use case:
+ If the execution already happens in UI thread, then `Swing` just returns `false`, otherwise it dispatches
+ execution of the continuation onto Swing UI thread until its next suspension. 
+ 
+ To use this and other dispatchers we'll redefine `async` [coroutine builder](#coroutine-builders) 
+ so that it takes an optional dispatcher parameter as was shown in [asynchronous UI](#asynchronous-ui) use case:
  
  ```kotlin
- fun <T> asyncSwing(block: suspend () -> T): CompletableFuture<T> {
-     val future = CompletableFuture<T>()
-     block.startCoroutine(completion = object : Continuation<T> {
-         override fun resume(value: T) { 
-             future.complete(value) 
-         }
-         override fun resumeWithException(exception: Throwable) { 
-             future.completeExceptionally(exception) 
-         }
-     }, dispatcher = SwingDispatcher) // Note the dispatcher parameter to startCoroutine
-     return future
- }
-
- ```
+fun <T> async(dispatcher: ContinuationDispatcher? = null, block: suspend () -> T): CompletableFuture<T> {
+    val future = CompletableFuture<T>()
+    block.startCoroutine(completion = object : Continuation<T> {
+        // same code as before
+    }, dispatcher = dispatcher) // new dispatcher parameter
+    return future
+}
+```
   
-> You can get this code [here](examples/swing.kt)  
+> You can get this code [here](examples/async.kt)  
   
-Its only difference from `async` builder is the additional argument to `startCoroutine`, which is actually defined
-in the standard library in the following way:
+The only difference from the original version `async` builder is that we pass an additional parameter to 
+the `startCoroutine`, which is actually defined in the standard library in the following way:
 
 ```kotlin
 fun <T> (suspend () -> T).startCoroutine(
@@ -732,6 +727,45 @@ suspend fun File.aRead(): ByteArray {
 ```
 
 > You can get this code [here](examples/io.kt)  
+
+### Non-blocking sleep
+
+Coroutines should not use [`Thread.sleep`](https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html#sleep-long-),
+because it blocks a thread. However, it is quite straightforward to implement a suspending sleep function by using
+Java's [`ScheduledThreadPoolExecutor`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ScheduledThreadPoolExecutor.html)
+
+```kotlin
+private val executor = Executors.newSingleThreadScheduledExecutor {
+    Thread(it, "sleep-thread").apply { isDaemon = true }
+}
+
+suspend fun sleep(millis: Long): Unit = suspendCoroutine { c ->
+    executor.schedule({ c.resume(Unit) }, millis, TimeUnit.MILLISECONDS)
+}
+```
+
+> You can get this code [here](examples/sleep.kt)  
+
+Note, that this kind of `sleep` function resumes the coroutines that are using it in its single "sleep-thread".
+The coroutines that are using [dispatcher](#dispatcher) like `Swing` will not stay to execute in this thread, 
+as their dispatcher dispatches them into an appropriate thread. Coroutines without dispatcher will stay to execute
+in this sleep thread. So this solution is convenient for demo purposes, but it is not the most efficient one. It
+is advisable to implement sleep natively in the corresponding dispatchers.
+
+For `Swing` dispatcher that native implementation of non-blocking sleep shall use 
+[Swing Timer](https://docs.oracle.com/javase/8/docs/api/javax/swing/Timer.html)
+that is specifically designed for this purpose:
+
+```kotlin
+suspend fun Swing.sleep(millis: Int): Unit = suspendCoroutine { c ->
+    Timer(millis) { c.resume(Unit) }.apply {
+        isRepeats = false
+        start()
+    }
+}
+```
+
+> You can get this code [here](examples/swing-sleep.kt)  
 
 ### Cooperative single-thread multitasking
 
@@ -1185,7 +1219,7 @@ async { // starts a coroutine
 You can use all the regular single-threaded mutable structures inside the scope of a particular coroutine.
 However, sharing mutable state _between_ coroutines is potentially dangerous. If you use a coroutine builder
 that install a dispatcher to resume all coroutines JS-style in the single event-dispatch thread, 
-like the `asyncSwing{}`shown in [dispatcher](#dispatcher) section, then you can safely work with all shared
+like the `Swing` dispatcher shown in [dispatcher](#dispatcher) section, then you can safely work with all shared
 objects that are generally modified from this event-dispatch thread. 
 However, if you use multi-threaded coroutine builder or otherwise share mutable state between 
 coroutines running in different threads, then you have to use thread-safe (concurrent) data structures. 

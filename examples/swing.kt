@@ -4,7 +4,7 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.ContinuationDispatcher
 import kotlin.coroutines.startCoroutine
 
-object SwingDispatcher : ContinuationDispatcher {
+object Swing : ContinuationDispatcher {
     override fun <T> dispatchResume(value: T, continuation: Continuation<T>): Boolean {
         if (SwingUtilities.isEventDispatchThread()) return false
         SwingUtilities.invokeLater { continuation.resume(value) }
@@ -16,17 +16,4 @@ object SwingDispatcher : ContinuationDispatcher {
         SwingUtilities.invokeLater { continuation.resumeWithException(exception) }
         return true
     }
-}
-
-fun <T> asyncSwing(block: suspend () -> T): CompletableFuture<T> {
-    val future = CompletableFuture<T>()
-    block.startCoroutine(completion = object : Continuation<T> {
-        override fun resume(value: T) {
-            future.complete(value)
-        }
-        override fun resumeWithException(exception: Throwable) {
-            future.completeExceptionally(exception)
-        }
-    }, dispatcher = SwingDispatcher) // Note the dispatcher parameter to startCoroutine
-    return future
 }

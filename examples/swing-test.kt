@@ -15,7 +15,7 @@ fun display(result: String) {
 }
 
 fun main(args: Array<String>) {
-    asyncSwing {
+    async(Swing) {
         try {
             // suspend while asynchronously making request
             val result = makeRequest()

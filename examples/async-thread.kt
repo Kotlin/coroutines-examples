@@ -122,6 +122,8 @@ private class AsyncThreadScopeImpl<T>(name: String) : Runnable, AsyncThreadScope
     }
 }
 
+// test code
+
 fun main(args: Array<String>) {
     log("Starting MyEventThread")
     val f = asyncThread("MyEventThread") {

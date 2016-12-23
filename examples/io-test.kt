@@ -1,7 +1,7 @@
 import java.io.File
 
 fun main(args: Array<String>) {
-    asyncSwing {
+    async(Swing) {
         val fileName = "examples/io.kt"
         log("Asynchronously loading file \"$fileName\" ...")
         val bytes = File(fileName).aRead()
