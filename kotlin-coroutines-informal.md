@@ -1177,7 +1177,7 @@ coroutines running in different threads, then you have to use thread-safe (concu
 
 Coroutines are like threads, albeit they are more lightweight. You can have millions of coroutines running on 
 just a few threads. The running coroutine is always executed in some thread. However, a _suspended_ coroutine
-does not consume a thread and it is not bound to a thread in any way. The suspending fuction that resumes this
+does not consume a thread and it is not bound to a thread in any way. The suspending function that resumes this
 coroutine decides which thread the coroutine is resumed on by invoking `Continuation.resume` on this thread 
 and coroutine's dispatcher can override this decision and dispatch the coroutine's execution onto a different thread.
 
