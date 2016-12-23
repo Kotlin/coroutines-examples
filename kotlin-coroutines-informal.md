@@ -1172,7 +1172,7 @@ However, sharing mutable state _between_ coroutines is potentially dangerous. If
 that install a dispatcher to resume all coroutines JS-style in the single event-dispatch thread, 
 like the `asyncSwing{}`shown in [dispatcher](#dispatcher) section, then you can safely work with all shared
 objects that are generally modified from this event-dispatch thread. 
-However, if you use mutli-threaded coroutine builder or otherwise share mutable state between 
+However, if you use multi-threaded coroutine builder or otherwise share mutable state between 
 coroutines running in different threads, then you have to use thread-safe (concurrent) data structures. 
 
 Coroutines are like threads, albeit they are more lightweight. You can have millions of coroutines running on 
