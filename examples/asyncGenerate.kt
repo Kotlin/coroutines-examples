@@ -1,4 +1,5 @@
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.ContinuationDispatcher
 import kotlin.coroutines.createCoroutine
 import kotlin.coroutines.suspendCoroutine
 
@@ -15,10 +16,13 @@ interface AsyncIterator<out T> {
     suspend operator fun next(): T
 }
 
-fun <T> asyncGenerate(block: suspend AsyncGenerator<T>.() -> Unit): AsyncSequence<T> = object : AsyncSequence<T> {
+fun <T> asyncGenerate(
+    dispatcher: ContinuationDispatcher? = null,
+    block: suspend AsyncGenerator<T>.() -> Unit
+): AsyncSequence<T> = object : AsyncSequence<T> {
     override fun iterator(): AsyncIterator<T> {
         val iterator = AsyncGeneratorIterator<T>()
-        iterator.nextStep = block.createCoroutine(receiver = iterator, completion = iterator)
+        iterator.nextStep = block.createCoroutine(receiver = iterator, completion = iterator, dispatcher = dispatcher)
         return iterator
     }
 }
