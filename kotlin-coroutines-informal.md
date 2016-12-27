@@ -1253,7 +1253,7 @@ suspend fun sendEmail(emailArgs: EmailArgs): EmailResult =
 So, in some sense, these two styles are equivalent and are both definitely superior to callback style in their
 convenience. However, let us look deeper at a difference between `sendEmailAsync` and suspending `sendEmail`.
 
-Let's compare how they **compose** first. Suspending functions can be composted using 
+Let's compare how they **compose** first. Suspending functions can be composed using 
 `suspending` builder that is trivially implemented [here](examples/suspending.kt):
 
 ```kotlin
