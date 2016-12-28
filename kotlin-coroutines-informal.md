@@ -67,7 +67,7 @@ asynchronous I/O (the APIs below are simplified):
 
 ```kotlin
 // asynchronously read into `buf`, and when done run the lambda
-inFile.read(buf) {
+inChannel.read(buf) {
     // this lambda is executed when the reading completes
     bytesRead ->
     ...
@@ -75,7 +75,7 @@ inFile.read(buf) {
     process(buf, bytesRead)
     
     // asynchronously write from `buf`, and when done run the lambda
-    outFile.write(buf) {
+    outChannel.write(buf) {
         // this lambda is executed when the writing completes
         ...
         ...
@@ -95,13 +95,13 @@ the I/O APIs to coroutine requirements):
 ```kotlin
 async {
     // suspend while asynchronously reading
-    val bytesRead = inFile.aRead(buf) 
+    val bytesRead = inChannel.aRead(buf) 
     // we only get to this line when reading completes
     ...
     ...
     process(buf, bytesRead)
     // suspend while asynchronously writing   
-    outFile.aWrite(buf)
+    outChannel.aWrite(buf)
     // we only get to this line when writing completes  
     ...
     ...
@@ -694,28 +694,39 @@ of use-cases.
 ### Wrapping callbacks
 
 Many asynchronous APIs have callback-style interfaces. The `suspendCoroutine` suspending function 
-from the standard library provides for
-an easy way to wrap any callback into a Kotlin suspending function. For example,
-`File.aRead()` function from [asynchronous computations](#asynchronous-computations) use case 
-can be implemented as a suspending function on top of Java NIO 
+from the standard library provides for an easy way to wrap any callback into a Kotlin suspending function. 
+
+There is a simple pattern. Assume that you have `someLongComputation` function with callback that 
+receives `Result` of this computation.
+
+```kotlin
+fun someLongComputation(params: Params, callback: (Result) -> Unit)
+```
+
+You can convert it into a suspending function with the following straightforward code:
+ 
+```kotlin
+suspend fun someLongComputation(params: Params): Result = suspendCoroutine { c ->
+    someLongComputation(params) { c.resume(it) }
+} 
+```
+
+Now the return type of this computation is explicit, but it is still asynchronous and does not block a thread.
+
+For a more complex example let us take a look at
+`aRead()` function from [asynchronous computations](#asynchronous-computations) use case. 
+It can be implemented as a suspending extension function for Java NIO 
 [`AsynchronousFileChannel`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/AsynchronousFileChannel.html)
 and its 
 [`CompletionHandler`](https://docs.oracle.com/javase/8/docs/api/java/nio/channels/CompletionHandler.html)
 callback interface with the following code:
 
 ```kotlin
-suspend fun File.aRead(): ByteArray {
-    val channel = AsynchronousFileChannel.open(toPath());
-    val tentativeSize = channel.size()
-    if (tentativeSize > Int.MAX_VALUE) throw IOException("File is too large to read into byte array")
-    val buffer = ByteBuffer.allocate(tentativeSize.toInt())
-    return suspendCoroutine { c ->
-        channel.read(buffer, 0L, Unit, object : CompletionHandler<Int, Unit> {
+suspend fun AsynchronousFileChannel.aRead(buf: ByteBuffer): Int =
+    suspendCoroutine { c ->
+        read(buf, 0L, Unit, object : CompletionHandler<Int, Unit> {
             override fun completed(bytesRead: Int, attachment: Unit) {
-                val n = bytesRead.coerceAtLeast(0)
-                val bytes = if (n == buffer.capacity()) buffer.array() 
-                    else buffer.array().copyOf(n)
-                c.resume(bytes)
+                c.resume(bytesRead)
             }
 
             override fun failed(exception: Throwable, attachment: Unit) {
@@ -723,10 +734,31 @@ suspend fun File.aRead(): ByteArray {
             }
         })
     }
-}
 ```
 
 > You can get this code [here](examples/io.kt)  
+
+If you are dealing with lots of functions that all share the same type of callback, then you can define a common
+wrapper function to easily convert all of them to suspending functions. For example, 
+[vert.x](http://vertx.io/) uses a particular convention that all its asynchronous functions receive 
+`Handler<AsyncResult<T>>` as a callback. To simply the use of arbitrary vert.x functions from coroutines
+the following helper function can be defined:
+
+```kotlin
+inline suspend fun <T> vx(crossinline callback: (Handler<AsyncResult<T>>) -> Unit) = 
+    suspendCoroutine<T> { c ->
+        callback(Handler { result: AsyncResult<T> ->
+            if (result.succeeded()) {
+                c.resume(result.result())
+            } else {
+                c.resumeWithException(result.cause())
+            }
+        })
+    }
+```
+
+Using this helper function, an arbitrary asynchronous vert.x function `foo(params, handler)` 
+can be invoked from a coroutine with `vx { foo(params, it) }`.
 
 ### Non-blocking sleep
 
