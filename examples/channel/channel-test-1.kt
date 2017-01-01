@@ -7,7 +7,7 @@ import suspending.suspending
 
 suspend fun say(s: String) = suspending {
     for (i in 0..4) {
-        sleep(100)
+        go.sleep(100)
         println(s)
     }
 }

@@ -1,10 +1,9 @@
 package suspending
 
-import channel.go
 import kotlin.coroutines.CoroutineIntrinsics
 import kotlin.coroutines.startCoroutine
 
-suspend fun <T> suspending(block: suspend go.() -> T): T = CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
-    block.startCoroutine(receiver = go, completion = c)
+suspend fun <T> suspending(block: suspend () -> T): T = CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
+    block.startCoroutine(completion = c)
     CoroutineIntrinsics.SUSPENDED
 }
