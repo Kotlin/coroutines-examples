@@ -45,10 +45,19 @@ public fun <T> generate(block: suspend Generator<T>.() -> Unit): Sequence<T> = o
 private class GeneratorIterator<T>: Generator<T>(), Iterator<T>, Continuation<Unit> {
     var computedNext = false
     var nextStep: Continuation<Unit>? = null
+    var nextIterator: Iterator<T>? = null
     var nextValue: T? = null
 
     override fun hasNext(): Boolean {
         if (!computedNext) {
+            if (nextIterator != null) {
+                if (nextIterator!!.hasNext()) {
+                    nextValue = nextIterator!!.next()
+                    computedNext = true
+                    return true
+                }
+                nextIterator = null
+            }
             val step = nextStep!!
             computedNext = true
             nextStep = null
@@ -59,8 +68,10 @@ private class GeneratorIterator<T>: Generator<T>(), Iterator<T>, Continuation<Un
 
     override fun next(): T {
         if (!hasNext()) throw NoSuchElementException()
+        val value = nextValue as T
         computedNext = false
-        return nextValue as T
+        nextValue = null
+        return value
     }
 
     // Completion continuation implementation
@@ -84,24 +95,10 @@ private class GeneratorIterator<T>: Generator<T>(), Iterator<T>, Continuation<Un
     override suspend fun yieldAll(iterator: Iterator<T>) {
         if (!iterator.hasNext()) return // no values -- don't suspend
         nextValue = iterator.next()
+        nextIterator = iterator
         return CoroutineIntrinsics.suspendCoroutineOrReturn { c ->
-            nextStep = IteratorContinuation(c, iterator)
+            nextStep = c
             CoroutineIntrinsics.SUSPENDED
-        }
-    }
-
-    inner class IteratorContinuation(val completion: Continuation<Unit>, val iterator: Iterator<T>) : Continuation<Unit> {
-        override fun resume(value: Unit) {
-            if (!iterator.hasNext()) {
-                completion.resume(Unit)
-                return
-            }
-            nextValue = iterator.next()
-            nextStep = this
-        }
-
-        override fun resumeWithException(exception: Throwable) {
-            throw exception // just rethrow
         }
     }
 }
