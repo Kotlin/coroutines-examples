@@ -1,16 +1,23 @@
+package suspendingSequence
+
+import context.newSingleThreadContext
+import delay.delay
+import run.runBlocking
+import test.log
 import java.util.*
 
 fun main(args: Array<String>) {
-    asyncThread("MyThread") {
+    val context = newSingleThreadContext("MyThread")
+    runBlocking(context) {
         // asynchronously generate a number every 500 ms
-        val seq = asyncGenerate {
+        val seq = suspendingSequence(context) {
             log("Starting generator")
             for (i in 1..10) {
                 log("Generator yields $i")
                 yield(i)
                 val generatorSleep = 500L
                 log("Generator goes to sleep for $generatorSleep ms")
-                sleep(generatorSleep)
+                delay(generatorSleep)
             }
             log("Generator is done")
         }
@@ -21,7 +28,7 @@ fun main(args: Array<String>) {
             log("Consumer got value = $value")
             val consumerSleep = random.nextInt(1000).toLong()
             log("Consumer goes to sleep for $consumerSleep ms")
-            sleep(consumerSleep)
+            delay(consumerSleep)
         }
     }
 }

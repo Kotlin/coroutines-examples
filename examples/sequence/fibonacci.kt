@@ -1,7 +1,9 @@
-import generate.generate
+package sequence
+
+import sequence.buildSequence
 
 // inferred type is Sequence<Int>
-val fibonacci = generate {
+val fibonacci = buildSequence {
     yield(1) // first Fibonacci number
     var cur = 1
     var next = 1

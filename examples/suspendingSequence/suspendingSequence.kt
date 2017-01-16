@@ -1,33 +1,39 @@
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.ContinuationDispatcher
-import kotlin.coroutines.createCoroutine
-import kotlin.coroutines.suspendCoroutine
+package suspendingSequence
 
-interface AsyncGenerator<in T> {
+import kotlin.coroutines.*
+
+interface SuspendingSequenceBuilder<in T> {
     suspend fun yield(value: T)
 }
 
-interface AsyncSequence<out T> {
-    operator fun iterator(): AsyncIterator<T>
+interface SuspendingSequence<out T> {
+    operator fun iterator(): SuspendingIterator<T>
 }
 
-interface AsyncIterator<out T> {
+interface SuspendingIterator<out T> {
     suspend operator fun hasNext(): Boolean
     suspend operator fun next(): T
 }
 
-fun <T> asyncGenerate(
-    dispatcher: ContinuationDispatcher? = null,
-    block: suspend AsyncGenerator<T>.() -> Unit
-): AsyncSequence<T> = object : AsyncSequence<T> {
-    override fun iterator(): AsyncIterator<T> {
-        val iterator = AsyncGeneratorIterator<T>()
-        iterator.nextStep = block.createCoroutine(receiver = iterator, completion = iterator, dispatcher = dispatcher)
-        return iterator
-    }
+fun <T> suspendingSequence(
+        context: CoroutineContext = EmptyCoroutineContext,
+        block: suspend SuspendingSequenceBuilder<T>.() -> Unit
+): SuspendingSequence<T> = object : SuspendingSequence<T> {
+    override fun iterator(): SuspendingIterator<T> = suspendingIterator(context, block)
+
 }
 
-class AsyncGeneratorIterator<T>: AsyncIterator<T>, AsyncGenerator<T>, Continuation<Unit> {
+fun <T> suspendingIterator(
+        context: CoroutineContext = EmptyCoroutineContext,
+        block: suspend SuspendingSequenceBuilder<T>.() -> Unit
+): SuspendingIterator<T> =
+        SuspendingIteratorCoroutine<T>(context).apply {
+            nextStep = block.createCoroutine(receiver = this, completion = this)
+        }
+
+class SuspendingIteratorCoroutine<T>(
+    override val context: CoroutineContext
+): SuspendingIterator<T>, SuspendingSequenceBuilder<T>, Continuation<Unit> {
     enum class State { INITIAL, COMPUTING_HAS_NEXT, COMPUTING_NEXT, COMPUTED, DONE }
     var state: State = State.INITIAL
     var nextValue: T? = null

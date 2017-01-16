@@ -3,7 +3,7 @@ package channel.test8
 import channel.Channel
 import channel.SendChannel
 import channel.go
-import suspending.suspending
+import channel.mainBlocking
 import java.util.*
 
 // https://tour.golang.org/concurrency/7
@@ -11,14 +11,13 @@ import java.util.*
 
 val treeSize = 10
 
-suspend fun Tree.walk(ch: SendChannel<Int>): Unit = suspending {
+suspend fun Tree.walk(ch: SendChannel<Int>): Unit {
     left?.walk(ch)
     ch.send(value)
     right?.walk(ch)
-    Unit
 }
 
-suspend fun same(t1: Tree, t2: Tree): Boolean = suspending {
+suspend fun same(t1: Tree, t2: Tree): Boolean {
     val c1 = Channel<Int>()
     val c2 = Channel<Int>()
     go { t1.walk(c1) }
@@ -29,10 +28,10 @@ suspend fun same(t1: Tree, t2: Tree): Boolean = suspending {
         val v2 = c2.receive()
         if (v1 != v2) same = false
     }
-    same
+    return same
 }
 
-fun main(args: Array<String>) = go.main {
+fun main(args: Array<String>) = mainBlocking {
     val t1 = newTree(1)
     val t2 = newTree(1)
     val t3 = newTree(2)

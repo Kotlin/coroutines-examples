@@ -1,12 +1,12 @@
-import java.util.concurrent.CompletableFuture
+package future
 
-// TEST CODE
+import java.util.concurrent.CompletableFuture
 
 fun foo(): CompletableFuture<String> = CompletableFuture.supplyAsync { "foo" }
 fun bar(v: String): CompletableFuture<String> = CompletableFuture.supplyAsync { "bar with $v" }
 
 fun main(args: Array<String>) {
-    val future = async {
+    val future = future {
         println("start")
         val x = foo().await()
         println("got '$x'")

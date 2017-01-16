@@ -3,7 +3,8 @@ package mutex
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineIntrinsics
+import kotlin.coroutines.intrinsics.SUSPENDED_MARKER
+import kotlin.coroutines.intrinsics.suspendCoroutineOrReturn
 
 class Mutex {
     /*
@@ -21,7 +22,7 @@ class Mutex {
         // fast path -- try lock uncontended
         if (state.compareAndSet(-1, 0)) return
         // slow path -- other cases
-        return CoroutineIntrinsics.suspendCoroutineOrReturn sc@ { c ->
+        return suspendCoroutineOrReturn sc@ { c ->
             // tentatively add a waiter before locking (and we can get resumed because of that!)
             val waiter = Waiter(c)
             waiters.add(waiter)
@@ -39,14 +40,14 @@ class Mutex {
                         return@sc Unit // don't suspend, but continue execution with lock
 
                     }
-                } else { // state >= 0 -- already locked --> increase waiters count and sleep peacefully until resumed
+                } else { // state >= 0 -- already locked --> increase waiters count and context.sleep peacefully until resumed
                     check(curState >= 0)
                     if (state.compareAndSet(curState, curState + 1)) {
                         break@loop
                     }
                 }
             }
-            CoroutineIntrinsics.SUSPENDED // suspend
+            SUSPENDED_MARKER // suspend
         }
     }
 

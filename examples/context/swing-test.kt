@@ -1,3 +1,7 @@
+package context
+
+import run.runSuspending
+import test.log
 import java.util.concurrent.ForkJoinPool
 import kotlin.coroutines.suspendCoroutine
 
@@ -15,11 +19,11 @@ fun display(result: String) {
 }
 
 fun main(args: Array<String>) {
-    async(Swing) {
+    runSuspending(Swing) {
         try {
             // suspend while asynchronously making request
             val result = makeRequest()
-            // display result in UI, here asyncSwing ensures that we always stay in event dispatch thread
+            // display result in UI, here Swing context ensures that we always stay in event dispatch thread
             display(result)
         } catch (exception: Throwable) {
             // process exception

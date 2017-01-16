@@ -1,15 +1,11 @@
 package channel.multiplexing2
 
-import channel.Channel
-import channel.ReceiveChannel
+import channel.*
 import channel.boring.boring
-import channel.go
-import channel.select
-import suspending.suspending
 
 // https://talks.golang.org/2012/concurrency.slide#27
 
-suspend fun fanIn(input1: ReceiveChannel<String>, input2: ReceiveChannel<String>): ReceiveChannel<String> = suspending {
+suspend fun fanIn(input1: ReceiveChannel<String>, input2: ReceiveChannel<String>): ReceiveChannel<String> {
     val c = Channel<String>()
     go {
         while(true) {
@@ -20,10 +16,10 @@ suspend fun fanIn(input1: ReceiveChannel<String>, input2: ReceiveChannel<String>
             c.send(s)
         }
     }
-    c // return combo channel
+    return c // return combo channel
 }
 
-fun main(args: Array<String>) = go.main {
+fun main(args: Array<String>) = mainBlocking {
     val c = fanIn(boring("Joe"), boring("Ann"))
     for (i in 0..9) {
         println(c.receive())

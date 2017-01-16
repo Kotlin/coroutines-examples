@@ -3,9 +3,9 @@ package channel.test2
 import channel.Channel
 import channel.SendChannel
 import channel.go
-import suspending.suspending
+import channel.mainBlocking
 
-suspend fun sum(s: List<Int>, c: SendChannel<Int>) = suspending {
+suspend fun sum(s: List<Int>, c: SendChannel<Int>) {
     var sum = 0
     for (v in s) {
         sum += v
@@ -13,7 +13,7 @@ suspend fun sum(s: List<Int>, c: SendChannel<Int>) = suspending {
     c.send(sum)
 }
 
-fun main(args: Array<String>) = go.main {
+fun main(args: Array<String>) = mainBlocking {
     val s = listOf(7, 2, 8, -9, 4, 0)
     val c = Channel<Int>()
     go { sum(s.subList(s.size / 2, s.size), c) }

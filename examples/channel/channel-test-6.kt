@@ -1,12 +1,13 @@
 package channel.test6
 
 import channel.Time
-import channel.go
+import channel.mainBlocking
 import channel.whileSelect
+import delay.delay
 
 // https://tour.golang.org/concurrency/6
 
-fun main(args: Array<String>) = go.main {
+fun main(args: Array<String>) = mainBlocking {
     val tick = Time.tick(100)
     val boom = Time.after(500)
     whileSelect {
@@ -20,7 +21,7 @@ fun main(args: Array<String>) = go.main {
         }
         onDefault {
             println("    .")
-            sleep(50)
+            delay(50)
             true // continue loop
         }
     }

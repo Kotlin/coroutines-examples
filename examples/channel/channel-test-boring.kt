@@ -3,28 +3,29 @@ package channel.boring
 import channel.Channel
 import channel.ReceiveChannel
 import channel.go
-import suspending.suspending
+import channel.mainBlocking
+import delay.delay
 import java.util.*
 
 // https://talks.golang.org/2012/concurrency.slide#25
 
-suspend fun boring(msg: String): ReceiveChannel<String> = suspending { // returns receive-only channel of strings
+suspend fun boring(msg: String): ReceiveChannel<String> { // returns receive-only channel of strings
     val c = Channel<String>()
     val rnd = Random()
     go {
         var i = 0
         while (true) {
             c.send("$msg $i")
-            sleep(rnd.nextInt(1000).toLong())
+            delay(rnd.nextInt(1000).toLong())
             i++
         }
     }
-    c // return the channel to the caller
+    return c // return the channel to the caller
 }
 
 // https://talks.golang.org/2012/concurrency.slide#26
 
-fun main(args: Array<String>) = go.main {
+fun main(args: Array<String>) = mainBlocking {
     val joe = boring("Joe")
     val ann = boring("Ann")
     for (i in 0..4) {

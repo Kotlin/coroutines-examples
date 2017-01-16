@@ -3,10 +3,10 @@ package channel.test2a
 import channel.Channel
 import channel.SendChannel
 import channel.go
-import suspending.suspending
+import channel.mainBlocking
 import kotlin.system.measureTimeMillis
 
-suspend fun sum(s: List<Int>, c: SendChannel<Int>) = suspending {
+suspend fun sum(s: List<Int>, c: SendChannel<Int>) {
     // simulate long-running CPU-consuming computation
     var sum = 0
     val time = measureTimeMillis {
@@ -20,7 +20,7 @@ suspend fun sum(s: List<Int>, c: SendChannel<Int>) = suspending {
     println("Sum took $time ms")
 }
 
-fun main(args: Array<String>) = go.main {
+fun main(args: Array<String>) = mainBlocking {
     val s = listOf(7, 2, 8, -9, 4, 0)
     val c = Channel<Int>()
     go { sum(s.subList(s.size /2, s.size), c) }

@@ -1,6 +1,5 @@
 package channel
 
-import suspending.suspending
 import kotlin.coroutines.suspendCoroutine
 
 inline suspend fun <R> select(block: SelectorBuilder<R>.() -> Unit): R =
@@ -33,7 +32,7 @@ class SelectorBuilder<R> {
     }
 }
 
-suspend fun whileSelect(block: SelectorBuilder<Boolean>.() -> Unit): Unit = suspending {
-    while(select(block))
-    Unit
+suspend fun whileSelect(block: SelectorBuilder<Boolean>.() -> Unit): Unit {
+    while(select(block)) { /*loop*/ }
 }
+

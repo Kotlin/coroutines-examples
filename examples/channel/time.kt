@@ -1,13 +1,14 @@
 package channel
 
+import delay.delay
 import java.time.Instant
 
 object Time {
     fun tick(millis: Long): ReceiveChannel<Instant> {
         val c = Channel<Instant>()
-        go("tick", daemon = true) {
+        go {
             while (true) {
-                sleep(millis)
+                delay(millis)
                 c.send(Instant.now())
             }
         }
@@ -16,8 +17,8 @@ object Time {
 
     fun after(millis: Long): ReceiveChannel<Instant> {
         val c = Channel<Instant>()
-        go("after") {
-            sleep(millis)
+        go {
+            delay(millis)
             c.send(Instant.now())
             c.close()
         }

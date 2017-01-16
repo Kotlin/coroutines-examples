@@ -1,6 +1,6 @@
-package generateActual
+package sequence.optimized
 
-val fibonacci: Sequence<Int> = generate {
+val fibonacci: Sequence<Int> = buildSequence {
     yield(1) // first Fibonacci number
     var cur = 1
     var next = 1
@@ -12,15 +12,7 @@ val fibonacci: Sequence<Int> = generate {
     }
 }
 
-val composite: Sequence<Int> = generate {
-    yield(0)
-    yieldAll(fibonacci.take(10))
-    yieldAll(listOf()) // yielding an empty list does not actually suspend generator
-    yieldAll(listOf(-1, -2))
-}
-
 fun main(args: Array<String>) {
     println(fibonacci)
     println(fibonacci.take(10).joinToString())
-    println(composite.joinToString())
 }
