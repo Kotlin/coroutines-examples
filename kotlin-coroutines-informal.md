@@ -1374,7 +1374,7 @@ of taking a callback as a parameter. In this async-style the signature of `sendE
 fun sendEmailAsync(emailArgs: EmailArgs): Future<EmailResult>
 ```
 
-As a matter of style, it is a good practise to add `Async` suffix to such method names, because their 
+As a matter of style, it is a good practice to add `Async` suffix to such method names, because their 
 parameters are no different from a blocking version and it is quite easy to make a mistake of forgetting about
 asynchronous nature of their operation. The function `sendEmailAsync` starts a _concurrent_ asynchronous operation 
 and potentially brings with it all the pitfalls of concurrency. However, languages that promote this style of 
