@@ -2,13 +2,11 @@ package context
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.suspendCoroutine
 
 fun newFixedThreadPoolContext(nThreads: Int, name: String) = ThreadContext(nThreads, name)
 fun newSingleThreadContext(name: String) = ThreadContext(1, name)
@@ -46,9 +44,5 @@ class ThreadContext(
     }
 
     private fun isContextThread() = thisThreadContext.get() == this@ThreadContext
-
-    suspend fun sleep(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Unit = suspendCoroutine { c ->
-        executor.schedule({ c.resume(Unit) }, time, unit)
-    }
 }
 
