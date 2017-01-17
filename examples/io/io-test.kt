@@ -1,14 +1,14 @@
 package io
 
 import context.Swing
-import future.future
+import run.runSuspending
 import test.log
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.file.Paths
 
 fun main(args: Array<String>) {
-    future(Swing) {
+    runSuspending(Swing) {
         val fileName = "examples/io/io.kt"
         log("Asynchronously loading file \"$fileName\" ...")
         val channel = AsynchronousFileChannel.open(Paths.get(fileName))

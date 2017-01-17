@@ -7,10 +7,7 @@ import kotlin.coroutines.ContinuationInterceptor
 
 object Swing : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
     override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
-        SwingContinuation(continuation.context.fold(continuation, { cont, element ->
-            if (element != Swing && element is ContinuationInterceptor)
-                element.interceptContinuation(cont) else cont
-        }))
+        SwingContinuation(continuation)
 }
 
 private class SwingContinuation<T>(val cont: Continuation<T>) : Continuation<T> by cont {

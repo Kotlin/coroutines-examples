@@ -631,8 +631,16 @@ interface ContinuationInterceptor : CoroutineContext.Element {
 }
  ```
  
-The `interceptContinuation` function wraps the continuation of the coroutine. Coroutine framework invokes this
-function on when and caches the result for the corresponding continuation.
+The `interceptContinuation` function wraps the continuation of the coroutine. Whenever coroutine is suspended,
+coroutine framework uses the following line of code to wrap the actual `continuation` for the subsequent
+resumption:
+
+```kotlin
+val facade = continuation.context[ContinuationInterceptor]?.interceptContinuation(continuation) ?: continuation
+```
+ 
+Coroutine framework caches the resulting facade for each actual instance of continuation. See
+[implementation details](#implementation-details) section for more details.
 
 Let us take a look at a concrete example code for `Swing` interceptor that dispatches execution onto
 Swing UI event dispatch thread. We start with a definition of a `SwingContinuation` wrapper class that
@@ -655,28 +663,26 @@ private class SwingContinuation<T>(val cont: Continuation<T>) : Continuation<T> 
 }
 ```
 
-Then we define `Swing` object that is going to serve as the corresponding context element and implement
+Then define `Swing` object that is going to serve as the corresponding context element and implement
 `ContinuationInterceptor` interface:
   
 ```kotlin
 object Swing : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
-     override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
-         SwingContinuation(continuation.context.fold(continuation, { cont, element ->
-             if (element != Swing && element is ContinuationInterceptor)
-                 element.interceptContinuation(cont) else cont
-         }))
+    override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
+        SwingContinuation(continuation)
 }
 ```
 
 > You can get this code [here](examples/context/swing.kt)
 
-By convention, to enable _composable_ interception context elements that use `ContinuationInterceptor` key shall
-also scan the context for other elements implementing `ContinuationInterceptor` interface and chain them to
-the wrapped interface continuation, too. That is what the above code does.
-
-For example, security framework may need to initialize some thread-local variables in the new thread.
-`SwingContinuation` invokes `cont.resume` in the `SwingUtilities.invokeLater` block, and `cont` in the above
-code comes from other context elements that implement `ContinuationInterceptor` interface.
+Now, one can use `runSuspending{}` [coroutine builder](#coroutine-builders) with `Swing` parameter to 
+execute a coroutine that is running completely in Swing event dispatch thread:
+ 
+ ```kotlin
+runSuspending(Swing) {
+   // there code in here can suspend, but will always resume in Swing EDT
+}
+```
 
 ### Restricted suspension
 
