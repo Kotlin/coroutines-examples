@@ -31,7 +31,7 @@ class Mutex {
                 if (curState == -1) {
                     if (state.compareAndSet(-1, 0)) {
                         // locked successfully this time, there were no _other_ waiter -- mark us as resumed,
-                        // but check we were already resummed in bettween waiters.add(...) and state.cas(...) by
+                        // but check we were already resumed in between waiters.add(...) and state.cas(...) by
                         // somebody else
                         if (waiter.resumed)
                             break@loop // was already resumed by some other thread -> indicate suspend
@@ -40,7 +40,7 @@ class Mutex {
                         return@sc Unit // don't suspend, but continue execution with lock
 
                     }
-                } else { // state >= 0 -- already locked --> increase waiters count and context.sleep peacefully until resumed
+                } else { // state >= 0 -- already locked --> increase waiters count and sleep peacefully until resumed
                     check(curState >= 0)
                     if (state.compareAndSet(curState, curState + 1)) {
                         break@loop
@@ -78,7 +78,7 @@ class Mutex {
             // see if this is an _actual_ waiter (not resumed yet by some previous mutex holder)
             if (!waiter.resumed)
                 return waiter
-            // otherwise it is an artefact, just look for the next one
+            // otherwise it is an artifact, just look for the next one
         }
     }
 
