@@ -5,7 +5,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
 
-fun runSuspending(context: CoroutineContext = EmptyCoroutineContext, block: suspend () -> Unit) =
+fun launch(context: CoroutineContext, block: suspend () -> Unit) =
         block.startCoroutine(StandaloneCoroutine(context))
 
 private class StandaloneCoroutine(override val context: CoroutineContext): Continuation<Unit> {

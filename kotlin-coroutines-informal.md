@@ -98,7 +98,7 @@ This same computation can be expressed straightforwardly as a coroutine (provide
 the I/O APIs to coroutine requirements):
  
 ```kotlin
-runSuspending {
+launch(Here) {
     // suspend while asynchronously reading
     val bytesRead = inChannel.aRead(buf) 
     // we only get to this line when reading completes
@@ -121,20 +121,20 @@ lambda and passed to `aRead()` as a callback, and the same has been done for `aW
 we can see that this code is the same as above, only more readable. 
 
 It is our explicit goal to support coroutines in a very generic way, so in this example,
- `runSuspending{}`, `.aRead()`, and `.aWrite()` are just **library functions** geared for
-working with coroutines (details below): `runSuspending` is the _coroutine builder_ — it marks
-the _scope_ of a coroutine and starts it, while `aRead`/`aWrite` are special
+ `launch{}`, `.aRead()`, and `.aWrite()` are just **library functions** geared for
+working with coroutines: `launch` is the _coroutine builder_ — it builds and launches coroutine
+in some context (a default `Here` context is used in the example), while `aRead`/`aWrite` are special
 _suspending functions_ which implicitly receive 
 _continuations_ (continuations are just generic callbacks).  
 
-> The library code for `runSuspending{}` is shown in [coroutine builders](#coroutine-builders) section, and
+> The library code for `launch{}` is shown in [coroutine builders](#coroutine-builders) section, and
 the library code for `.aRead()` is shown in [wrapping callbacks](#wrapping-callbacks) section.
 
 Note, that with explicitly passed callbacks having an asynchronous call in the middle of a loop can be tricky, 
 but in a coroutine it is a perfectly normal thing to have:
 
 ```kotlin
-runSuspending {
+launch(Here) {
     while (true) {
         // suspend while asynchronously reading
         val bytesRead = inFile.aRead(buf)
@@ -285,7 +285,7 @@ This is similar to callback hell that we've seen in [asynchronous computations](
 and it is elegantly solved by coroutines, too:
  
 ```kotlin
-runSuspending(Swing) {
+launch(Swing) {
     try {
         // suspend while asynchronously making request
         val result = makeRequest()
@@ -337,14 +337,14 @@ Moreover, like a future or promise, it may _complete_ with some result or except
   Just like a regular lambda expression is a short syntactic form for an anonymous local function,
   a suspending lambda is a short syntactic form for an anonymous suspending function. It may _suspend_ execution of
   the code without blocking the current thread of execution by invoking suspending functions.
-  For example, blocks of code in curly braces following `runSuspending`, `future`, and `buildSequence` functions,
+  For example, blocks of code in curly braces following `launch`, `future`, and `buildSequence` functions,
   as shown in [use cases](#use-cases), are suspending lambdas.
 
 > Note: Suspending lambdas may invoke suspending functions in all places of their code where a 
   [non-local](https://kotlinlang.org/docs/reference/returns.html) `return` statement
   from this lambda is allowed. That is, suspending function calls inside inline lambdas 
   like [`apply{}` block](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/apply.html) are allowed,
-  but not in the non-inline nor in `crossinline` inner lambda expressions. 
+  but not in the `noinline` nor in `crossinline` inner lambda expressions. 
   A _suspension_ is treated as a special kind of non-local control transfer.
 
 * A _suspending function type_ — is a function type for suspending functions and lambdas. It is just like 
@@ -354,7 +354,7 @@ Moreover, like a future or promise, it may _complete_ with some result or except
   conforms to this function type.
 
 * A _coroutine builder_ — a function that takes some _suspending lambda_ as an argument, creates a coroutine,
-  and, optionally, gives access to its result in some form. For example, `runSuspending{}`, `future{}`,
+  and, optionally, gives access to its result in some form. For example, `launch{}`, `future{}`,
   and `buildSequence{}` as shown in [use cases](#use-cases), are coroutine builders defined in a library.
   The standard library provides primitive coroutine builders that are used to define all other coroutine builders.
 
@@ -432,7 +432,10 @@ suspend fun <T> CompletableFuture<T>.await(): T =
     }
 ``` 
 
-> You can get this code [here](examples/future/await.kt)
+> You can get this code [here](examples/future/await.kt).
+  Note: this simple implementation suspends coroutine forever if the future never completes.
+  The actual implementation in [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) is slightly more
+  involved, because it supports cancellation.
 
 The `suspend` modifier indicates that this is a function that can suspend execution of a coroutine.
 This particular function is defined as an 
@@ -480,10 +483,10 @@ which, in turn, becomes the return value of `.await()` when the coroutine _resum
 
 Suspending functions cannot be invoked from regular functions, so the standard library provides functions
 to start coroutine execution from a regular non-suspending scope. Here is the implementation of a simple
-`runSuspending{}` _coroutine builder_:
+`launch{}` _coroutine builder_:
 
 ```kotlin
-fun runSuspending(context: CoroutineContext = EmptyCoroutineContext, block: suspend () -> Unit) =
+fun launch(context: CoroutineContext, block: suspend () -> Unit) =
         block.startCoroutine(StandaloneCoroutine(context))
 
 private class StandaloneCoroutine(override val context: CoroutineContext): Continuation<Unit> {
@@ -496,23 +499,25 @@ private class StandaloneCoroutine(override val context: CoroutineContext): Conti
 }
 ```
 
-> You can get this code [here](examples/run/runSuspending.kt)
+> You can get this code [here](examples/run/launch.kt).
 
 This implementation defines a simple class `StandaloneCoroutine` that represents this coroutine and
 implements `Continuation` interface to capture its completion.
 The completion of coroutine invokes its _completion continuation_. Its `resume` or `resumeWithException`
 functions are invoked when coroutine _completes_ with the result or exception correspondingly.
-Because `runSuspending` does "fire-and-forget"
+Because `launch` does "fire-and-forget"
 coroutine, it is defined for suspending functions with `Unit` return type and actually ignores
 this result in its `resume` function. If coroutine execution completes with exception,
 then the uncaught exception handler of the current thread is used to report it.
 
+> Note: this simple implementation returns `Unit` and provides no access to the state of the coroutine at all. 
+  The actual implementation in [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) is more
+  complex, because it returns an instance of `Job` interface that represents a coroutine and can be cancelled.
+
 The context is covered in details in [coroutine context](#coroutine-context) section.
-It suffices to say here that it is a good style to
-accept an optional `context` parameter in library-defined coroutine builders, so that a user
-of this builder can specify a user-defined context if needed. `EmptyCoroutineContext` is provided
-in the standard library and serves as a good default, so that `runSuspending` builder can be used
-without additional parameters in a typical case where user-defined context is not needed.
+It suffices to say here that it is a good style to include a `context` parameter in 
+library-defined coroutine builders for better _composition_ with other libraries that may define useful 
+context elements.
 
 The `startCoroutine` is defined in the standard library as an extension for suspending function type. 
 Its signature is:
@@ -526,21 +531,27 @@ until the first _suspension point_, then it returns.
 Suspension point is an invocation of some [suspending function](#suspending-functions) in the body of the coroutine and
 it is up to the code of the corresponding suspending function to define when and how the coroutine execution resumes.
 
-A remark. Coroutine interceptor, from the coroutine context that is covered [later](#coroutine-interceptor), can move
+> Note: continuation interceptor (from the context) that is covered [later](#continuation-interceptor), can dispatch
 the execution of the coroutine, _including_ its initial continuation, into another thread.
 
 ### Coroutine context
 
 Coroutine context is a persistent set of user-defined objects that can be attached to the coroutine. It
 may include objects responsible for coroutine threading policy, logging, security and transaction aspects of the
-coroutine execution, coroutine identity and name, etc. The standard library does not contain any concrete
-implements of the context elements, but has interfaces and abstract classes so that all these aspects
+coroutine execution, coroutine identity and name, etc. Here is the simple mental model of coroutines and their
+contexts. Think of a coroutine as a light-weight thread. In this case, coroutine context is just like a collection 
+of thread-local variables. The difference is that thread-local variables are mutable, while coroutine context is
+immutable, which is not a serious limitation for coroutines, because they are so light-weight that it is easy to
+launch a new coroutine when there is a need to change something in the context.
+
+The standard library does not contain any concrete implementations of the context elements, 
+but has interfaces and abstract classes so that all these aspects
 can be defined in libraries in a _composable_ way, so that aspects from different libraries can coexist
 peacefully as elements of the same context.
 
 Conceptually, coroutine context is an indexed set of elements, where each elements has a unique key.
 It is a mix between a set in a map. Its elements has keys like a map, but its keys are directly associated
-with elements, more like in a set. The standard library defines minimal interface for `CoroutineContext`:
+with elements, more like in a set. The standard library defines the minimal interface for `CoroutineContext`:
 
 ```kotlin
 interface CoroutineContext {
@@ -550,7 +561,7 @@ interface CoroutineContext {
     fun minusKey(key: Key<*>): CoroutineContext
 
     interface Element : CoroutineContext {
-        public val key: Key<*>
+        val key: Key<*>
     }
 
     interface Key<E : Element>
@@ -562,23 +573,25 @@ The `CoroutineContext` itself has four core operations available on it:
 * Operator `get` provides type-safe access to an element for a given key. It can be used with `[..]` notation
   as explained in [Kotlin operator overloading](https://kotlinlang.org/docs/reference/operator-overloading.html).
 * Function `fold` works likes [`Collection.fold`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/fold.html)
-  extension in the standard library and provides ability to process all elements in the context.
-* Operator `plus` workds like ['Set.plus`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/plus.html)
+  extension in the standard library and provides means to iterate all elements in the context.
+* Operator `plus` works like ['Set.plus`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/plus.html)
   extension in the standard library and returns a combination of two contexts with elements on the right-hand side
   of plus replacing elements with the same key on the left-hand side.
 * Function `minusKey` returns a context that does not contain a specified key.
 
-The `Element` of the coroutine context is a context itself. It is a singleton context with this element.
+The `Element` of the coroutine context is a context itself. It is a singleton context with this element only.
 This allows to create composite contexts by taking library definitions of coroutine context elements and
 joining them with `+`. For example, if one library defines `auth` element with user authorization information,
-and some other library defines `dispatch` element with some execution context information,
-then you can use a `runSuspending{}` [coroutine builder](#coroutine-builders) with the combined context using
-`runSuspending(auth + dispatch) {...}` invocation.
+and some other library defines `CommonPool` object with some execution context information,
+then you can use a `launch{}` [coroutine builder](#coroutine-builders) with the combined context using
+`launch(auth + CommonPool) {...}` invocation.
+
+> Note: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) provides several context elements, 
+  including `CommonPool` object that dispatches execution of coroutine onto a shared pool of background threads.
 
 All library-defined context elements shall extend `AbstractCoroutineContextElement` class that is provided
 by the standard library. The following style is recommended for library defined context elements.
 The example below shows a hypothetical authorization context element that stores current user name:
-
 
 ```kotlin
 class AuthUser(val name: String) : AbstractCoroutineContextElement(AuthUser) {
@@ -593,7 +606,7 @@ needs to check the name of the current user:
 ```kotlin
 suspend fun secureAwait(): Unit = suspendCoroutine { cont ->
     val currentUser = cont.context[AuthUser]?.name
-    // do something
+    // do something user-specific
 }
 ```
 
@@ -601,12 +614,12 @@ suspend fun secureAwait(): Unit = suspendCoroutine { cont ->
 
 Let's recap [asynchronous UI](#asynchronous-ui) use case. Asynchronous UI applications must ensure that the 
 coroutine body itself is always executed in UI thread, despite the fact that various suspending functions 
-resume coroutine execution in arbitrary threads. This is accomplished using _continuation interceptor_.
+resume coroutine execution in arbitrary threads. This is accomplished using a _continuation interceptor_.
 First of all, we need to fully understand the lifecycle of a coroutine. Consider a snippet of code that uses 
-[`runSuspending{}`](#coroutine-builders) coroutine builder:
+[`launch{}`](#coroutine-builders) coroutine builder:
 
 ```kotlin
-runSuspending {
+launch(Here) {
     initialCode() // execution of initial code
     f1.await() // suspension point #1
     block1() // execution #1
@@ -673,13 +686,16 @@ object Swing : AbstractCoroutineContextElement(ContinuationInterceptor), Continu
 }
 ```
 
-> You can get this code [here](examples/context/swing.kt)
+> You can get this code [here](examples/context/swing.kt).
+  Note: the actual implementation of `Swing` object in [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) 
+  also supports coroutine debugging facilities that provide and display the identifier of the currently running 
+  coroutine in the name of the thread that is currently running this coroutine.
 
-Now, one can use `runSuspending{}` [coroutine builder](#coroutine-builders) with `Swing` parameter to 
+Now, one can use `launch{}` [coroutine builder](#coroutine-builders) with `Swing` parameter to 
 execute a coroutine that is running completely in Swing event dispatch thread:
  
  ```kotlin
-runSuspending(Swing) {
+launch(Swing) {
    // there code in here can suspend, but will always resume in Swing EDT
 }
 ```
@@ -823,7 +839,9 @@ suspend fun AsynchronousFileChannel.aRead(buf: ByteBuffer): Int =
     }
 ```
 
-> You can get this code [here](examples/io/io.kt)
+> You can get this code [here](examples/io/io.kt).
+  Note: for large-scale production use coroutine-based IO libraries shall provide some means to cancel long-running
+  IO operations.
 
 If you are dealing with lots of functions that all share the same type of callback, then you can define a common
 wrapper function to easily convert all of them to suspending functions. For example, 
@@ -850,15 +868,21 @@ can be invoked from a coroutine with `vx { future.foo(params, it) }`.
 ### Building futures
 
 The `future{}` builder from [futures](#futures) use-case can be defined for any future or promise primitive
-similarly to the `runSuspending{}` builder as explained in [coroutine builders](#coroutine-builders) section:
+similarly to the `launch{}` builder as explained in [coroutine builders](#coroutine-builders) section:
 
 ```kotlin
-fun <T> future(context: CoroutineContext = EmptyCoroutineContext, block: suspend () -> T): CompletableFuture<T> =
+fun <T> future(context: CoroutineContext = CommonPool, block: suspend () -> T): CompletableFuture<T> =
         CompletableFutureCoroutine<T>(context).also { block.startCoroutine(completion = it) }
 ```
 
-The difference is that it returns an implementation of
-[`CompletableFuture`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html)
+The first difference from `launch{}` is that it returns an implementation of
+[`CompletableFuture`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html), 
+and the other difference is that it is defined with a default `CommonPool` context, so that its default
+execution behaviour is similar to the 
+[`CompletableFuture.supplyAsync`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html#supplyAsync-java.util.function.Supplier-)
+method that runs its code in 
+[`ForkJoinPool.commonPool`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html#commonPool--).
+The basic implementation of `CompletableFutureCoroutine` is straightforward:
 
 ```kotlin
 class CompletableFutureCoroutine<T>(override val context: CoroutineContext) : CompletableFuture<T>(), Continuation<T> {
@@ -867,7 +891,9 @@ class CompletableFutureCoroutine<T>(override val context: CoroutineContext) : Co
 }
 ```
 
-> You can get this code [here](examples/future/future.kt)
+> You can get this code [here](examples/future/future.kt).
+  The actual implementation in [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) is more advanced,
+  because it propagates the cancellation of the resulting future to cancel the coroutine.
 
 The completion of this coroutine invokes the corresponding `complete` methods of the future to record the
 result of this coroutine.
@@ -888,10 +914,11 @@ suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Unit = su
 }
 ```
 
-> You can get this code [here](examples/delay/delay.kt)
+> You can get this code [here](examples/delay/delay.kt).
+  Node: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) also provides `delay` function.
 
 Note, that this kind of `delay` function resumes the coroutines that are using it in its single "scheduler" thread.
-The coroutines that are using [interceptor](#coroutine-interceptor) like `Swing` will not stay to execute in this thread,
+The coroutines that are using [interceptor](#continuation-interceptor) like `Swing` will not stay to execute in this thread,
 as their interceptor dispatches them into an appropriate thread. Coroutines without interceptor will stay to execute
 in this scheduler thread. So this solution is convenient for demo purposes, but it is not the most efficient one. It
 is advisable to implement sleep natively in the corresponding interceptors.
@@ -909,7 +936,9 @@ suspend fun Swing.delay(millis: Int): Unit = suspendCoroutine { cont ->
 }
 ```
 
-> You can get this code [here](examples/context/swing-delay.kt)
+> You can get this code [here](examples/context/swing-delay.kt).
+  Node: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) implementation of `delay` is aware of
+  interceptor-specific sleep facilities and automatically uses the above approach where appropriate. 
 
 ### Cooperative single-thread multitasking
 
@@ -954,7 +983,9 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get fully working example [here](examples/context/threadContext-test.kt)
+> You can get fully working example [here](examples/context/threadContext-test.kt).
+  Node: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) has ready-to-use implementation of
+  `newSingleThreadContext`. 
 
 If your whole application is based on a single-threaded execution, you can define your own helper coroutine
 builders with a hardcoded context for your single-threaded execution facilities.
@@ -1205,7 +1236,7 @@ never blocks, but suspends (using suspending functions), without actually blocki
 The Java concurrency primitives like 
 [`ReentrantLock`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantLock.html)
 are thread-blocking and they should not be used in a truly non-blocking code. To control access to shared
-resources one can define Go-style `Mutex` that suspends an execution of coroutine instead of blocking it.
+resources one can define `Mutex` class that suspends an execution of coroutine instead of blocking it.
 The header of the corresponding class would like this:
 
 ```kotlin
@@ -1319,7 +1350,7 @@ Each individual coroutine, just like a thread, is executed sequentially. It mean
 of code is perfectly safe inside a coroutine:
 
 ```kotlin
-runSuspending { // starts a coroutine
+launch(Here) { // starts a coroutine
     val m = mutableMapOf<String, String>()
     val v1 = someAsyncTask1().await() // suspends on await
     m["k1"] = v1 // modify map when resumed
@@ -1428,7 +1459,7 @@ suspend fun largerBusinessProcess() {
 The corresponding async-style functions compose in this way:
 
 ```kotlin
-fun largerBusinessProcessAsync() = async {
+fun largerBusinessProcessAsync() = future {
    // a lot of code here, then somewhere inside
    sendEmailAsync(emailArgs).await()
    // something else goes on after that

@@ -6,7 +6,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
 
-fun <T> runBlocking(context: CoroutineContext = EmptyCoroutineContext, block: suspend () -> T): T =
+fun <T> runBlocking(context: CoroutineContext, block: suspend () -> T): T =
         BlockingCoroutine<T>(context).also { block.startCoroutine(it) }.getValue()
 
 private class BlockingCoroutine<T>(override val context: CoroutineContext): Continuation<T> {

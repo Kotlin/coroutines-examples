@@ -1,6 +1,6 @@
 package context
 
-import run.runSuspending
+import run.launch
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinWorkerThread
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -18,7 +18,7 @@ open class Pool(val pool: ForkJoinPool) : AbstractCoroutineContextElement(Contin
 
     // runs new coroutine in this pool in parallel (schedule to a different thread)
     fun runParallel(block: suspend () -> Unit) {
-        pool.execute { runSuspending(this, block) }
+        pool.execute { launch(this, block) }
     }
 }
 
