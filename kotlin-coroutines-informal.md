@@ -1704,7 +1704,7 @@ override suspend fun yield(value: T) {
  
 ## Revision history
 
-This document given an overview of changes between various revision of coroutines.
+This section gives an overview of changes between various revisions of coroutines design.
 
 ### Changes in revision 3
 
