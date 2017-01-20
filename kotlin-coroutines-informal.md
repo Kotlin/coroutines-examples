@@ -574,13 +574,13 @@ The `CoroutineContext` itself has four core operations available on it:
   as explained in [Kotlin operator overloading](https://kotlinlang.org/docs/reference/operator-overloading.html).
 * Function `fold` works likes [`Collection.fold`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/fold.html)
   extension in the standard library and provides means to iterate all elements in the context.
-* Operator `plus` works like ['Set.plus`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/plus.html)
+* Operator `plus` works like [`Set.plus`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/plus.html)
   extension in the standard library and returns a combination of two contexts with elements on the right-hand side
   of plus replacing elements with the same key on the left-hand side.
 * Function `minusKey` returns a context that does not contain a specified key.
 
-The `Element` of the coroutine context is a context itself. It is a singleton context with this element only.
-This allows to create composite contexts by taking library definitions of coroutine context elements and
+An `Element` of the coroutine context is a context itself. It is a singleton context with this element only.
+This enables creation of composite contexts by taking library definitions of coroutine context elements and
 joining them with `+`. For example, if one library defines `auth` element with user authorization information,
 and some other library defines `CommonPool` object with some execution context information,
 then you can use a `launch{}` [coroutine builder](#coroutine-builders) with the combined context using
@@ -696,7 +696,7 @@ execute a coroutine that is running completely in Swing event dispatch thread:
  
  ```kotlin
 launch(Swing) {
-   // there code in here can suspend, but will always resume in Swing EDT
+   // code in here can suspend, but will always resume in Swing EDT
 }
 ```
 
