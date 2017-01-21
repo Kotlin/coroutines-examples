@@ -549,8 +549,8 @@ but has interfaces and abstract classes so that all these aspects
 can be defined in libraries in a _composable_ way, so that aspects from different libraries can coexist
 peacefully as elements of the same context.
 
-Conceptually, coroutine context is an indexed set of elements, where each elements has a unique key.
-It is a mix between a set in a map. Its elements has keys like a map, but its keys are directly associated
+Conceptually, coroutine context is an indexed set of elements, where each element has a unique key.
+It is a mix between a set and a map. Its elements have keys like in a map, but its keys are directly associated
 with elements, more like in a set. The standard library defines the minimal interface for `CoroutineContext`:
 
 ```kotlin
@@ -1285,7 +1285,7 @@ and programming style.
 Coroutines don't use any off-heap storage and do not consume any native resources by themselves, unless the code
 that is running inside a coroutine does open a file or some other resource. While files opened in a coroutine must
 be closed somehow, the coroutine itself does not need to be closed. When coroutine is suspended its whole state is 
-available by the reference to its continuation. If you loose the reference to suspended coroutine's continuation,
+available by the reference to its continuation. If you lose the reference to suspended coroutine's continuation,
 then it will be ultimately collected by garbage collector.
 
 Coroutines that open some closeable resources deserve a special attention. Consider the following coroutine
