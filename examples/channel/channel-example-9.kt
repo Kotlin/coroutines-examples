@@ -1,9 +1,9 @@
-package channel.test9
+package channel.example9
 
 import channel.go
 import channel.mainBlocking
-import mutex.Mutex
 import delay.delay
+import mutex.Mutex
 
 // https://tour.golang.org/concurrency/9
 

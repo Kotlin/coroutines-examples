@@ -1,4 +1,4 @@
-package channel.test6
+package channel.example6
 
 import channel.Time
 import channel.mainBlocking

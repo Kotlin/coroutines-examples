@@ -1,4 +1,4 @@
-package channel.test3
+package channel.example3
 
 import channel.Channel
 import channel.mainBlocking

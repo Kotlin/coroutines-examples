@@ -2,7 +2,7 @@ package io
 
 import context.Swing
 import run.launch
-import test.log
+import util.log
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.file.Paths

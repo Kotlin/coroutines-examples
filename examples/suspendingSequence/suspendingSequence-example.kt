@@ -3,7 +3,7 @@ package suspendingSequence
 import context.newSingleThreadContext
 import delay.delay
 import run.runBlocking
-import test.log
+import util.log
 import java.util.*
 
 fun main(args: Array<String>) {

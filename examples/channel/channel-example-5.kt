@@ -1,4 +1,4 @@
-package channel.test5
+package channel.example5
 
 import channel.*
 

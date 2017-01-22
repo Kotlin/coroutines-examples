@@ -3,7 +3,7 @@ package context
 import future.await
 import future.future
 import run.runBlocking
-import test.log
+import util.log
 
 fun main(args: Array<String>) = runBlocking(Here) {
     // multithreaded pool

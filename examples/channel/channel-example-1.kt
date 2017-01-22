@@ -1,4 +1,4 @@
-package channel.test1
+package channel.example1
 
 import channel.go
 import channel.mainBlocking

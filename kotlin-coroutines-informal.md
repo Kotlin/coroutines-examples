@@ -983,7 +983,7 @@ fun main(args: Array<String>) {
 }
 ```
 
-> You can get fully working example [here](examples/context/threadContext-test.kt).
+> You can get fully working example [here](examples/context/threadContext-example.kt).
   Node: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) has ready-to-use implementation of
   `newSingleThreadContext`. 
 
@@ -1077,7 +1077,7 @@ for (value in seq) { // suspend while waiting for producer
 ```
 
 > You can find a worked out example with some logging that illustrates the execution
-  [here](examples/suspendingSequence-test.kt)
+  [here](examples/suspendingSequence-example.kt)
 
 ### Channels
 
@@ -1142,7 +1142,7 @@ fun main(args: Array<String>) = mainBlocking {
 }
 ```
 
-> You can checkout working code [here](examples/channel/channel-test-4.kt)
+> You can checkout working code [here](examples/channel/channel-example-4.kt)
 
 You can freely play with the buffer size of the channel. 
 For simplicity, only buffered channels are implemented in the example (with a minimal buffer size of 1), 
@@ -1173,7 +1173,7 @@ suspend fun fibonacci(c: SendChannel<Int>, quit: ReceiveChannel<Int>) {
 }
 ```
 
-> You can checkout working code [here](examples/channel/channel-test-5.kt)
+> You can checkout working code [here](examples/channel/channel-example-5.kt)
   
 Example has an implementation of both `select {...}`, that returns the result of one of its cases like a Kotlin 
 [`when` expression](https://kotlinlang.org/docs/reference/control-flow.html#when-expression), 
@@ -1204,7 +1204,7 @@ fun main(args: Array<String>) = mainBlocking {
 }
 ```
 
-> You can checkout working code [here](examples/channel/channel-test-6.kt)
+> You can checkout working code [here](examples/channel/channel-example-6.kt)
 
 The `Time.tick` and `Time.after` are trivially implemented 
 [here](examples/channel/time.kt) with non-blocking `delay` function.
@@ -1273,7 +1273,7 @@ class SafeCounter {
 }
 ```
 
-> You can checkout working code [here](examples/channel/channel-test-9.kt)
+> You can checkout working code [here](examples/channel/channel-example-9.kt)
 
 ## Advanced topics
 

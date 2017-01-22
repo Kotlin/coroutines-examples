@@ -1,4 +1,4 @@
-package channel.test8
+package channel.example8
 
 import channel.Channel
 import channel.SendChannel

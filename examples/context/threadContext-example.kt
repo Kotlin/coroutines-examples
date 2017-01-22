@@ -1,9 +1,9 @@
 package context
 
-import test.log
+import delay.delay
 import future.await
 import future.future
-import delay.delay
+import util.log
 
 fun main(args: Array<String>) {
     log("Starting MyEventThread")

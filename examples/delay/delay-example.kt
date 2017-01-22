@@ -2,8 +2,7 @@ package delay
 
 import context.Swing
 import future.future
-import delay.delay
-import test.log
+import util.log
 
 fun main(args: Array<String>) {
     future(Swing) {
