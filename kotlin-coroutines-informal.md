@@ -1662,12 +1662,12 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
 
 ### Compiling suspending functions
 
-The complied code for suspending function depends on how and when it invokes other suspending functions.
+The compiled code for suspending function depends on how and when it invokes other suspending functions.
 In the simplest case, a suspending function invokes other suspending functions only at _tail positions_ 
 making _tail calls_ to them. This is a typical case for suspending functions that implement low-level synchronization 
 primitives or wrap callbacks, as shown in [suspending functions](#suspending-functions) and
 [wrapping callbacks](#wrapping-callbacks) sections. These functions invoke some other suspending function
-like `suspendCoroutine` at tail position. They are complied just like regular non-suspending functions, with 
+like `suspendCoroutine` at tail position. They are compiled just like regular non-suspending functions, with 
 the only exception that the implicit continuation parameter they've got from [CPS transformation](#continuation-passing-style)
 is passed to the next suspending function in tail call.
 
