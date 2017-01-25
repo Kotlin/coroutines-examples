@@ -1519,19 +1519,19 @@ However, its actual _implementation_ has the following signature after _CPS tran
 fun <T> CompletableFuture<T>.await(continuation: Continuation<T>): Any?
 ```
 
-Its result type `T` had moved into a position of type argument in its additional continuation parameter.
+Its result type `T` has moved into a position of type argument in its additional continuation parameter.
 The implementation result type of `Any?` is designed to represent the action of the suspending function.
 When suspending function _suspends_ coroutine, it returns a special marker value of 
-`SUSPENDED_MARKER`. When suspending function does not suspend coroutine, but
-continues coroutine execution, it returns its result or throws exception directly.
-This way, the `Any?` return type of `await` implementation is actually a union of
-`SUSPENDED_MARKER` and `T` that cannot be expressed in Kotlin's type-system.
+`SUSPENDED_MARKER`. When a suspending function does not suspend coroutine but
+continues coroutine execution, it returns its result or throws an exception directly.
+This way, the `Any?` return type of the `await` implementation is actually a union of
+`SUSPENDED_MARKER` and `T` that cannot be expressed in Kotlin's type system.
 
-The actual implementation of suspending function is not allowed to invoke continuation in its stack-frame directly,
+The actual implementation of the suspending function is not allowed to invoke the continuation in its stack frame directly 
 because that may lead to stack overflow on long-running coroutines. The `suspendCoroutine` function in
 the standard library hides this complexity from an application developer by tracking invocations
-of continuation and ensures conformance to the actual implementation contract of 
-suspending functions regardless of how and when continuation is invoked.
+of continuations and ensures conformance to the actual implementation contract of 
+the suspending functions regardless of how and when the continuation is invoked.
 
 ### State machines
 
@@ -1550,8 +1550,8 @@ b()
 val z = bar(a, y).await() // suspension point #2
 c(z)
 ``` 
- 
-For this block of code there are three states:
+
+There are three states for this block of code:
  
  * initial (before any suspension point)
  * after the first suspension point
@@ -1604,7 +1604,7 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
 }    
 ```  
 
-Note that there is a `goto` operator and labels, because the example depicts what happens in the 
+Note that there is a `goto` operator and labels because the example depicts what happens in the 
 byte code, not in the source code.
 
 Now, when the coroutine is started, we call its `resume()` — `label` is `0`, 
@@ -1662,8 +1662,8 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
 ### Coroutine intrinsics
 
 The actual implementation of `suspendCoroutine` suspending function in the standard library is written in Kotlin
-itself and its source code is a available as a part of the standard library sources package. In order to provide for the
-safe and problem-free use of coroutines it wraps the actual continuation of the state machine 
+itself and its source code is available as part of the standard library sources package. In order to provide for the
+safe and problem-free use of coroutines, it wraps the actual continuation of the state machine 
 into an additional object on each suspension of coroutine. This is perfectly fine for truly asynchronous use cases
 like [asynchronous computations](#asynchronous-computations) and [futures](#futures), since the runtime costs of the 
 corresponding asynchronous primitives far outweigh the cost of an additional allocated object. However, for
