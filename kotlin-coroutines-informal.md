@@ -51,6 +51,7 @@ Goals:
 * [Implementation details](#implementation-details)
   * [Continuation passing style](#continuation-passing-style)
   * [State machines](#state-machines)
+  * [Compiling suspending functions](#compiling-suspending-functions)
   * [Coroutine intrinsics](#coroutine-intrinsics)
 * [Revision history](#revision-history)
   * [Changes in revision 3](#changes-in-revision-3)
@@ -1658,6 +1659,34 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
     }          
 }    
 ```  
+
+### Compiling suspending functions
+
+The complied code for suspending function depends on how and when it invokes other suspending functions.
+In the simplest case, a suspending function invokes other suspending functions only at _tail positions_ 
+making _tail calls_ to them. This is a typical case for suspending functions that implement low-level synchronization 
+primitives or wrap callbacks, as shown in [suspending functions](#suspending-functions) and
+[wrapping callbacks](#wrapping-callbacks) sections. These functions invoke some other suspending function
+like `suspendCoroutine` at tail position. They are complied just like regular non-suspending functions, with 
+the only exception that the implicit continuation parameter they've got from [CPS transformation](#continuation-passing-style)
+is passed to the next suspending function in tail call.
+
+> Note: in the current implementation `Unit`-returning function must include an explicit `return` statement 
+with the invocation of the other suspending function in order for it to be recognized as a tail call.
+
+In a case when suspending invocations appear in non-tail positions, the compiler creates a 
+[state machine](#state-machine) for the corresponding suspending function. An instance of the state machine
+object in created when suspending function is invoked and is discarded when it completes.
+
+> Note: in the future versions this compilation strategy may be optimized to create an instance of a state machine 
+only at first suspension point.
+
+This state machine object, in turn, serves as the _completion continuation_ for the invocation of other
+suspending functions in non-tail positions. This state machine object instance is updated and reused when 
+the function makes multiple invocations to other suspending functions. 
+Compare this to other [asynchronous programming styles](#asynchronous-programming-styles),
+where each subsequent step of asynchronous processing is typically implemented with a separate, freshly allocated,
+closure object.
 
 ### Coroutine intrinsics
 
