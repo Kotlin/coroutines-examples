@@ -1675,7 +1675,7 @@ is passed to the next suspending function in tail call.
 with the invocation of the other suspending function in order for it to be recognized as a tail call.
 
 In a case when suspending invocations appear in non-tail positions, the compiler creates a 
-[state machine](#state-machine) for the corresponding suspending function. An instance of the state machine
+[state machine](#state-machines) for the corresponding suspending function. An instance of the state machine
 object in created when suspending function is invoked and is discarded when it completes.
 
 > Note: in the future versions this compilation strategy may be optimized to create an instance of a state machine 
