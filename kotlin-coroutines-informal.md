@@ -1513,7 +1513,7 @@ of [`await` suspending function](#suspending-functions) looks like this:
 suspend fun <T> CompletableFuture<T>.await(): T
 ```
 
-However, it's actual _implementation_ has the following signature after _CPS transformation_:
+However, its actual _implementation_ has the following signature after _CPS transformation_:
 
 ```kotlin
 fun <T> CompletableFuture<T>.await(continuation: Continuation<T>): Any?
