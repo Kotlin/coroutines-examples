@@ -449,10 +449,10 @@ asyncOperation(...).await()
 ```
  
 A modifier `suspend` may be used on any function: top-level function, extension function, member function, 
-constructor, or operator function.
+or operator function.
 
-> Note, in the current release local functions and property getters/setters cannot have `suspend` modifier.
-  This restriction will be lifted in the future.
+> Note, in the current release local functions, property getters/setters, and constructors 
+  cannot have `suspend` modifier. These restrictions will be lifted in the future.
  
 Suspending functions may invoke any regular functions, but to actually suspend execution they must
 invoke some other suspending function. In particular, this `await` implementation invokes a suspending function
