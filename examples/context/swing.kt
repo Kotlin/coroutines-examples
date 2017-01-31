@@ -1,9 +1,9 @@
 package context
 
 import javax.swing.SwingUtilities
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.experimental.AbstractCoroutineContextElement
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.ContinuationInterceptor
 
 object Swing : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
     override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =

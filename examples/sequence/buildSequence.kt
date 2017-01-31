@@ -1,6 +1,6 @@
 package sequence
 
-import kotlin.coroutines.*
+import kotlin.coroutines.experimental.*
 
 @RestrictsSuspension
 interface SequenceBuilder<in T> {

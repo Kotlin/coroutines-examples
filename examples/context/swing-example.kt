@@ -3,7 +3,7 @@ package context
 import run.launch
 import util.log
 import java.util.concurrent.ForkJoinPool
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.experimental.suspendCoroutine
 
 suspend fun makeRequest(): String {
     log("Making request...")

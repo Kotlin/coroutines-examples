@@ -1,6 +1,6 @@
 package suspendingSequence
 
-import kotlin.coroutines.*
+import kotlin.coroutines.experimental.*
 
 interface SuspendingSequenceBuilder<in T> {
     suspend fun yield(value: T)

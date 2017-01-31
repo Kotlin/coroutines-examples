@@ -1,9 +1,9 @@
-# Coroutines for Kotlin (Revision 3)
+# Coroutines for Kotlin (Revision 3.1)
 
 * **Type**: Informal description
 * **Author**: Andrey Breslav
 * **Contributors**: Vladimir Reshetnikov, Stanislav Erokhin, Ilya Ryzhenkov, Denis Zharkov, Roman Elizarov
-* **Status**: Implemented in 1.1-Beta
+* **Status**: Implemented in Kotlin 1.1.0
 
 ## Abstract
 
@@ -28,6 +28,10 @@ Goals:
   * [Generators](#generators)
   * [Asynchronous UI](#asynchronous-ui)
   * [More use cases](#more-use-cases)
+* [Experimental status of coroutines](#experimental-status-of-coroutines)
+  * [Why release coroutines at all?](#why-release-coroutines-at-all)
+  * [What may change in future versions?](#what-may-change-in-future-versions)
+  * [How we plan to make it relatively easy to upgrade to the final design?](#how-we-plan-to-make-it-relatively-easy-to-upgrade-to-the-final-design)
 * [Coroutines overview](#coroutines-overview)
   * [Terminology](#terminology)
   * [Continuation interface](#continuation-interface)
@@ -313,11 +317,93 @@ Coroutines can cover many more use cases, including these:
 * Web application workflows: register a user, validate email, log them in 
 (a suspended coroutine may be serialized and stored in a DB).
 
+## Experimental status of coroutines
+
+Coroutines are experimental in Kotlin 1.1. We believe that it is a very important feature, because it opens a door on a 
+whole new style of programming: asynchronous, non-blocking code with straightforward structure. And we believe that 
+we have a very good design there: few built-in things, a lot of flexibility, clear mental model, 
+good performance where it matters.
+
+Nevertheless we are not too eager to say that this design is final. We understand that the whole area of 
+asynchronous programming is relatively new (to the main stream at least), and the experience that other languages 
+got before us (from Scheme and Go to C# and Dart) is not necessarily applicable to Kotlin, because of many subtle
+and not-so-subtle differences. Overall, it's largely unknown how people might use coroutines, 
+what turns out to be most important and even what use cases that we didn't think of are out there. 
+Of course, one can't expect to know all use cases upfront, so it's a matter of intuition/expert opinion as for
+when we have enough. We collected as much information as we could, did some extensive prototyping, wrote different
+libraries, and we feel it's more of a terra incognita at the moment.
+
+So, coroutines are experimental in 1.1, because we expect the design to change.
+
+Note that it's not the implementation bugs we worry about: there will be bugs, and we'll fix them as usual, 
+but overall we think that coroutines are in a good shape implementation-wise.
+
+### Why release coroutines at all?
+
+Normally, when a feature is not ready, we don't release it at all. We keep it in our language design back yard 
+until we're reasonably sure it's good enough to get into the language. So, why include an experimental feature in 1.1?
+
+The reason is: it's too big for our back yard :) This is to say: we did all we could do internally, but the feature 
+is too multifaceted in its possible applications to be released without an extensive battle-testing outside our team.
+
+So, we need your feedback and we need it as diverse as possible. This is why we make coroutines available to anyone, 
+but give a fair warning that the design may change. 
+An opt-in switch `-Xcoroutines=enable` removes the warning. 
+We want people to use them and communicate their use cases, issues and ideas back to us. 
+The more coroutine-based code is written out there, the sooner we can adjust the design and get to the final version of it.
+
+And, honestly, it's also a bit too good to be kept in the back yard :) Very many people can benefit from 
+coroutine-based APIs and libraries today, an this aligns nicely with what's said above: 
+the more you benefit, the more we can learn about your use cases and needs. 
+We expect that very many of you will find their use cases already covered just fine in 1.1, 
+but those who don't will give us valuable feedback.
+
+### What may change in future versions?
+
+When it comes to compatibility, there are two large groups of concerns: source compatibility and binary compatibility.
+
+Source compatibility is somewhat less of a concern, because if you have the source that used to compile in version X, 
+but fails to compile in version Y, then all you need to do is fix it, and we have a very positive experience in 
+providing you with tools that do that automatically (or almost automatically). 
+So, what may break in our source code? We do not expect the language syntax to change, 
+it's too little syntax, after all. But we think that the core APIs may change.
+
+Binary compatibility is usually harder: when you have a binary, you often do not control the source 
+(or it's too costly for you to fix the source and build a new binary). So, what may change in our binaries? 
+Well, the same core APIs affect the binaries as well as source, plus we may need to change something in the ABI, 
+i.e. how we represent coroutines in the byte code.
+
+### How we plan to make it relatively easy to upgrade to the final design?
+
+On the source/API level we will simply use the usual deprecate-migrate-remove cycle, 
+which has proven pretty smooth with the help of our ReplaceWith functionality in the IDE.
+Also, the newer compilers will keep supporting the experimental design for a while.
+
+* For a while they will understand binaries produced by 1.1 and generate correct calls to them.
+* With a compiler switch `-language-version=1.1` they will emit code as 1.1 does.
+
+On the binary level we are going to simply keep the experimental APIs in a separate package. 
+This is the way that, for example, JUnit and Rx used when rolling out radically new APIs.
+So, all the APIs related to coroutines in kotlin-stdlib ship in a package named `kotlin.coroutines.experimental`.
+When the final design is ready, we'll publish it under `kotlin.coroutines`, 
+and keep the old binaries compatible and working. We can remove the experimental package later on 
+(after waiting a considerable time to give everybody a change to migrate), or rather move it to a separate 
+artifact so that everyone can use it at any time if they have to.
+
+An important thing is: every library that uses coroutines in its public API should do the same. 
+I.e. if you are writing a library that it here to stay, so you care about the users of your future versions, 
+you will also need to name your package something like `org.my.library.experimental`. 
+And when the final design of coroutines comes, drop the `experimental` suffix from the main API, 
+but keep the old package around for those of your users who might need it for binary compatibility.
+
+We realize that there are some settings under which nothing is acceptable but 100% backward compatibility, 
+no bargaining allowed, but we expect these to be a minority of our users.
+
 ## Coroutines overview
 
 This section gives an overview of the language mechanisms that enable writing coroutines and 
-the standard libraries that govern their semantics.  
-
+the standard libraries that govern their semantics.
+  
 ### Terminology
 
 * A _coroutine_ — is an _instance_ of _suspendable computation_. It is conceptually similar to a thread, in the sense that
@@ -1523,10 +1609,10 @@ fun <T> CompletableFuture<T>.await(continuation: Continuation<T>): Any?
 Its result type `T` has moved into a position of type argument in its additional continuation parameter.
 The implementation result type of `Any?` is designed to represent the action of the suspending function.
 When suspending function _suspends_ coroutine, it returns a special marker value of 
-`SUSPENDED_MARKER`. When a suspending function does not suspend coroutine but
+`COROUTINE_SUSPENDED`. When a suspending function does not suspend coroutine but
 continues coroutine execution, it returns its result or throws an exception directly.
 This way, the `Any?` return type of the `await` implementation is actually a union of
-`SUSPENDED_MARKER` and `T` that cannot be expressed in Kotlin's type system.
+`COROUTINE_SUSPENDED` and `T` that cannot be expressed in Kotlin's type system.
 
 The actual implementation of the suspending function is not allowed to invoke the continuation in its stack frame directly 
 because that may lead to stack overflow on long-running coroutines. The `suspendCoroutine` function in
@@ -1587,14 +1673,14 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
         a = a()
         label = 1
         data = foo(a).await(this) // 'this' is passed as a continuation 
-        if (data == SUSPENDED_MARKER) return // return if await had suspended execution
+        if (data == COROUTINE_SUSPENDED) return // return if await had suspended execution
       L1:
         // external code has resumed this coroutine passing the result of .await() as data 
         y = (Y) data
         b()
         label = 2
         data = bar(a, y).await(this) // 'this' is passed as a continuation
-        if (data == SUSPENDED_MARKER) return // return if await had suspended execution
+        if (data == COROUTINE_SUSPENDED) return // return if await had suspended execution
       L2:
         // external code has resumed this coroutine passing the result of .await() as data 
         Z z = (Z) data
@@ -1647,7 +1733,7 @@ class <anonymous_for_state_machine> extends CoroutineImpl<...> implements Contin
         if (x > 10) goto END
         label = 1
         data = nextNumber().await(this) // 'this' is passed as a continuation 
-        if (data == SUSPENDED_MARKER) return // return if await had suspended execution
+        if (data == COROUTINE_SUSPENDED) return // return if await had suspended execution
       L1:
         // external code has resumed this coroutine passing the result of .await() as data 
         x += ((Integer) data).intValue()
@@ -1698,7 +1784,7 @@ like [asynchronous computations](#asynchronous-computations) and [futures](#futu
 corresponding asynchronous primitives far outweigh the cost of an additional allocated object. However, for
 the [generators](#generators) use case this additional cost is prohibitive.
 
-The `kotlin.coroutines.intrinsics` package in the standard library contains the function named `suspendCoroutineOrReturn`
+The `kotlin.coroutines.experimental.intrinsics` package in the standard library contains the function named `suspendCoroutineOrReturn`
 with the following signature:
 
 ```kotlin
@@ -1716,7 +1802,7 @@ that defy attempts to find and reproduce them via tests.
 
 Optimized version of `yield` via `suspendCoroutineOrReturn` is shown below.
 Because `yield` always suspends to pass the control back to the consumer of the sequence, 
-the corresponding block always returns `SUSPENDED_MARKER`.
+the corresponding block always returns `COROUTINE_SUSPENDED`.
 
 ```kotlin
 // Generator implementation
@@ -1724,7 +1810,7 @@ override suspend fun yield(value: T) {
     setNext(value)
     return suspendCoroutineOrReturn { cont ->
         nextStep = cont
-        SUSPENDED_MARKER
+        COROUTINE_SUSPENDED
     }
 }
 ```
@@ -1734,6 +1820,14 @@ override suspend fun yield(value: T) {
 ## Revision history
 
 This section gives an overview of changes between various revisions of coroutines design.
+
+### Changes in revision 3.1
+
+This revision is implemented in Kotlin 1.1.0 release.
+
+* `kotlin.coroutines` package is replaced with `kotlin.coroutines.experimental`.
+* `SUSPENDED_MARKER` is renamed to `COROUTINE_SUSPENDED`.
+* Clarification on experimental status of coroutines added.
 
 ### Changes in revision 3
 

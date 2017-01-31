@@ -3,9 +3,9 @@ package channel
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.startCoroutine
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.startCoroutine
+import kotlin.coroutines.experimental.suspendCoroutine
 
 interface SendChannel<T> {
     suspend fun send(value: T)

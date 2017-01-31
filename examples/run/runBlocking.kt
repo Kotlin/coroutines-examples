@@ -1,10 +1,9 @@
 package run
 
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.startCoroutine
 
 fun <T> runBlocking(context: CoroutineContext, block: suspend () -> T): T =
         BlockingCoroutine<T>(context).also { block.startCoroutine(it) }.getValue()

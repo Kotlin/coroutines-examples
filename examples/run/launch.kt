@@ -1,9 +1,8 @@
 package run
 
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.startCoroutine
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.startCoroutine
 
 fun launch(context: CoroutineContext, block: suspend () -> Unit) =
         block.startCoroutine(StandaloneCoroutine(context))

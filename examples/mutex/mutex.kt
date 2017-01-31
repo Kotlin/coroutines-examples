@@ -2,9 +2,9 @@ package mutex
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.intrinsics.SUSPENDED_MARKER
-import kotlin.coroutines.intrinsics.suspendCoroutineOrReturn
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 class Mutex {
     /*
@@ -47,7 +47,7 @@ class Mutex {
                     }
                 }
             }
-            SUSPENDED_MARKER // suspend
+            COROUTINE_SUSPENDED // suspend
         }
     }
 

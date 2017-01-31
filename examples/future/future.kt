@@ -1,8 +1,10 @@
 package future
 
-import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.*
 import context.CommonPool
+import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.startCoroutine
 
 fun <T> future(context: CoroutineContext = CommonPool, block: suspend () -> T): CompletableFuture<T> =
         CompletableFutureCoroutine<T>(context).also { block.startCoroutine(completion = it) }

@@ -4,9 +4,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.experimental.AbstractCoroutineContextElement
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.ContinuationInterceptor
 
 fun newFixedThreadPoolContext(nThreads: Int, name: String) = ThreadContext(nThreads, name)
 fun newSingleThreadContext(name: String) = ThreadContext(1, name)

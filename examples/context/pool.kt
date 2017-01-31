@@ -3,9 +3,9 @@ package context
 import run.launch
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinWorkerThread
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.experimental.AbstractCoroutineContextElement
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.ContinuationInterceptor
 
 object CommonPool : Pool(ForkJoinPool.commonPool())
 

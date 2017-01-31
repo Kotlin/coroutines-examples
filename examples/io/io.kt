@@ -3,7 +3,7 @@ package io
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.CompletionHandler
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.experimental.suspendCoroutine
 
 suspend fun AsynchronousFileChannel.aRead(buf: ByteBuffer): Int =
     suspendCoroutine { cont ->

@@ -1,8 +1,8 @@
 package future
 
 import java.util.concurrent.CompletableFuture
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.experimental.suspendCoroutine
 
 suspend fun <T> CompletableFuture<T>.await(): T =
     suspendCoroutine<T> { cont: Continuation<T> ->
