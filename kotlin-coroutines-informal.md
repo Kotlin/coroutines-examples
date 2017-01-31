@@ -58,6 +58,7 @@ Goals:
   * [Compiling suspending functions](#compiling-suspending-functions)
   * [Coroutine intrinsics](#coroutine-intrinsics)
 * [Revision history](#revision-history)
+  * [Changes in revision 3.1](#changes-in-revision-31)
   * [Changes in revision 3](#changes-in-revision-3)
   * [Changes in revision 2](#changes-in-revision-2)
 
