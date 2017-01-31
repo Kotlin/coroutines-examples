@@ -28,11 +28,8 @@ Goals:
   * [Generators](#generators)
   * [Asynchronous UI](#asynchronous-ui)
   * [More use cases](#more-use-cases)
-* [Experimental status of coroutines](#experimental-status-of-coroutines)
-  * [Why release coroutines at all?](#why-release-coroutines-at-all)
-  * [What may change in future versions?](#what-may-change-in-future-versions)
-  * [How we plan to make it relatively easy to upgrade to the final design?](#how-we-plan-to-make-it-relatively-easy-to-upgrade-to-the-final-design)
 * [Coroutines overview](#coroutines-overview)
+  * [Experimental status of coroutines](#experimental-status-of-coroutines)
   * [Terminology](#terminology)
   * [Continuation interface](#continuation-interface)
   * [Suspending functions](#suspending-functions)
@@ -318,93 +315,31 @@ Coroutines can cover many more use cases, including these:
 * Web application workflows: register a user, validate email, log them in 
 (a suspended coroutine may be serialized and stored in a DB).
 
-## Experimental status of coroutines
-
-Coroutines are experimental in Kotlin 1.1. We believe that it is a very important feature, because it opens a door on a 
-whole new style of programming: asynchronous, non-blocking code with straightforward structure. And we believe that 
-we have a very good design there: few built-in things, a lot of flexibility, clear mental model, 
-good performance where it matters.
-
-Nevertheless we are not too eager to say that this design is final. We understand that the whole area of 
-asynchronous programming is relatively new (to the main stream at least), and the experience that other languages 
-got before us (from Scheme and Go to C# and Dart) is not necessarily applicable to Kotlin, because of many subtle
-and not-so-subtle differences. Overall, it's largely unknown how people might use coroutines, 
-what turns out to be most important and even what use cases that we didn't think of are out there. 
-Of course, one can't expect to know all use cases upfront, so it's a matter of intuition/expert opinion as for
-when we have enough. We collected as much information as we could, did some extensive prototyping, wrote different
-libraries, and we feel it's more of a terra incognita at the moment.
-
-So, coroutines are experimental in 1.1, because we expect the design to change.
-
-Note that it's not the implementation bugs we worry about: there will be bugs, and we'll fix them as usual, 
-but overall we think that coroutines are in a good shape implementation-wise.
-
-### Why release coroutines at all?
-
-Normally, when a feature is not ready, we don't release it at all. We keep it in our language design back yard 
-until we're reasonably sure it's good enough to get into the language. So, why include an experimental feature in 1.1?
-
-The reason is: it's too big for our back yard :) This is to say: we did all we could do internally, but the feature 
-is too multifaceted in its possible applications to be released without an extensive battle-testing outside our team.
-
-So, we need your feedback and we need it as diverse as possible. This is why we make coroutines available to anyone, 
-but give a fair warning that the design may change. 
-An opt-in switch `-Xcoroutines=enable` removes the warning. 
-We want people to use them and communicate their use cases, issues and ideas back to us. 
-The more coroutine-based code is written out there, the sooner we can adjust the design and get to the final version of it.
-
-And, honestly, it's also a bit too good to be kept in the back yard :) Very many people can benefit from 
-coroutine-based APIs and libraries today, an this aligns nicely with what's said above: 
-the more you benefit, the more we can learn about your use cases and needs. 
-We expect that very many of you will find their use cases already covered just fine in 1.1, 
-but those who don't will give us valuable feedback.
-
-### What may change in future versions?
-
-When it comes to compatibility, there are two large groups of concerns: source compatibility and binary compatibility.
-
-Source compatibility is somewhat less of a concern, because if you have the source that used to compile in version X, 
-but fails to compile in version Y, then all you need to do is fix it, and we have a very positive experience in 
-providing you with tools that do that automatically (or almost automatically). 
-So, what may break in our source code? We do not expect the language syntax to change, 
-it's too little syntax, after all. But we think that the core APIs may change.
-
-Binary compatibility is usually harder: when you have a binary, you often do not control the source 
-(or it's too costly for you to fix the source and build a new binary). So, what may change in our binaries? 
-Well, the same core APIs affect the binaries as well as source, plus we may need to change something in the ABI, 
-i.e. how we represent coroutines in the byte code.
-
-### How we plan to make it relatively easy to upgrade to the final design?
-
-On the source/API level we will simply use the usual deprecate-migrate-remove cycle, 
-which has proven pretty smooth with the help of our ReplaceWith functionality in the IDE.
-Also, the newer compilers will keep supporting the experimental design for a while.
-
-* For a while they will understand binaries produced by 1.1 and generate correct calls to them.
-* With a compiler switch `-language-version=1.1` they will emit code as 1.1 does.
-
-On the binary level we are going to simply keep the experimental APIs in a separate package. 
-This is the way that, for example, JUnit and Rx used when rolling out radically new APIs.
-So, all the APIs related to coroutines in kotlin-stdlib ship in a package named `kotlin.coroutines.experimental`.
-When the final design is ready, we'll publish it under `kotlin.coroutines`, 
-and keep the old binaries compatible and working. We can remove the experimental package later on 
-(after waiting a considerable time to give everybody a change to migrate), or rather move it to a separate 
-artifact so that everyone can use it at any time if they have to.
-
-An important thing is: every library that uses coroutines in its public API should do the same. 
-I.e. if you are writing a library that it here to stay, so you care about the users of your future versions, 
-you will also need to name your package something like `org.my.library.experimental`. 
-And when the final design of coroutines comes, drop the `experimental` suffix from the main API, 
-but keep the old package around for those of your users who might need it for binary compatibility.
-
-We realize that there are some settings under which nothing is acceptable but 100% backward compatibility, 
-no bargaining allowed, but we expect these to be a minority of our users.
-
 ## Coroutines overview
 
 This section gives an overview of the language mechanisms that enable writing coroutines and 
 the standard libraries that govern their semantics.
-  
+
+### Experimental status of coroutines
+
+Coroutines are experimental in Kotlin 1.1, because we expect the design to change.
+Kotlin compiler produces a warning on usage of coroutine-related features. There is an opt-in switch 
+`-Xcoroutines=enable` that removes the warning. 
+
+All the APIs related to coroutines in kotlin-stdlib ship in a package named `kotlin.coroutines.experimental`.
+When the final design is ready, it will be published under `kotlin.coroutines`, 
+while the experimental package will stay for a while, so that the old binaries will be compatible and continue to work.
+
+Every library that uses coroutines in its public API should do the same,  
+so if you are writing a library that it here to stay and you care about the users of your future versions, 
+you will also need to name your package something like `org.my.library.experimental`. 
+And when the final design of coroutines comes, drop the `experimental` suffix from the main API, 
+but keep the old package around for those of your users who might need it for binary compatibility.
+
+> More details can be found in 
+  [this](https://discuss.kotlinlang.org/t/experimental-status-of-coroutines-in-1-1-and-related-compatibility-concerns/2236) 
+  forum post 
+
 ### Terminology
 
 * A _coroutine_ — is an _instance_ of _suspendable computation_. It is conceptually similar to a thread, in the sense that
