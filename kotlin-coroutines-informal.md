@@ -104,7 +104,7 @@ This same computation can be expressed straightforwardly as a coroutine (provide
 the I/O APIs to coroutine requirements):
  
 ```kotlin
-launch(Here) {
+launch(CommonPool) {
     // suspend while asynchronously reading
     val bytesRead = inChannel.aRead(buf) 
     // we only get to this line when reading completes
@@ -129,7 +129,7 @@ we can see that this code is the same as above, only more readable.
 It is our explicit goal to support coroutines in a very generic way, so in this example,
  `launch{}`, `.aRead()`, and `.aWrite()` are just **library functions** geared for
 working with coroutines: `launch` is the _coroutine builder_ — it builds and launches coroutine
-in some context (a default `Here` context is used in the example), while `aRead`/`aWrite` are special
+in some context (a `CommonPool` context is used in the example), while `aRead`/`aWrite` are special
 _suspending functions_ which implicitly receive 
 _continuations_ (continuations are just generic callbacks).  
 
@@ -140,7 +140,7 @@ Note, that with explicitly passed callbacks having an asynchronous call in the m
 but in a coroutine it is a perfectly normal thing to have:
 
 ```kotlin
-launch(Here) {
+launch(CommonPool) {
     while (true) {
         // suspend while asynchronously reading
         val bytesRead = inFile.aRead(buf)
@@ -707,7 +707,7 @@ First of all, we need to fully understand the lifecycle of a coroutine. Consider
 [`launch{}`](#coroutine-builders) coroutine builder:
 
 ```kotlin
-launch(Here) {
+launch(CommonPool) {
     initialCode() // execution of initial code
     f1.await() // suspension point #1
     block1() // execution #1
@@ -1438,7 +1438,7 @@ Each individual coroutine, just like a thread, is executed sequentially. It mean
 of code is perfectly safe inside a coroutine:
 
 ```kotlin
-launch(Here) { // starts a coroutine
+launch(CommonPool) { // starts a coroutine
     val m = mutableMapOf<String, String>()
     val v1 = someAsyncTask1().await() // suspends on await
     m["k1"] = v1 // modify map when resumed

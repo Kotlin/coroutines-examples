@@ -5,7 +5,7 @@ import future.future
 import run.runBlocking
 import util.log
 
-fun main(args: Array<String>) = runBlocking(Here) {
+fun main(args: Array<String>) = runBlocking(CommonPool) {
     // multithreaded pool
     val n = 4
     val compute = newFixedThreadPoolContext(n, "Compute")
