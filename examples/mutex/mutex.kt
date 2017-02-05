@@ -52,7 +52,7 @@ class Mutex {
     }
 
     fun unlock() {
-        while (true) { // look-free loop on state
+        while (true) { // lock-free loop on state
             // see if can unlock
             val curState = state.get()
             if (curState == 0) {
