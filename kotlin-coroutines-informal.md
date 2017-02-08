@@ -885,8 +885,8 @@ inline suspend fun <T> vx(crossinline callback: (Handler<AsyncResult<T>>) -> Uni
     }
 ```
 
-Using this helper function, an arbitrary asynchronous vert.x function `future.foo(params, handler)`
-can be invoked from a coroutine with `vx { future.foo(params, it) }`.
+Using this helper function, an arbitrary asynchronous vert.x function `async.foo(params, handler)`
+can be invoked from a coroutine with `vx { async.foo(params, it) }`.
 
 ### Building futures
 
