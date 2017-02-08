@@ -770,7 +770,7 @@ private class SequenceCoroutine<T>: AbstractIterator<T>(), SequenceBuilder<T>, C
     // Generator implementation
     override suspend fun yield(value: T) {
         setNext(value)
-        return suspendCoroutine { c -> nextStep = c }
+        return suspendCoroutine { cont -> nextStep = cont }
     }
 }
 ```
@@ -832,8 +832,8 @@ fun someLongComputation(params: Params, callback: (Result) -> Unit)
 You can convert it into a suspending function with the following straightforward code:
  
 ```kotlin
-suspend fun someLongComputation(params: Params): Result = suspendCoroutine { c ->
-    someLongComputation(params) { c.resume(it) }
+suspend fun someLongComputation(params: Params): Result = suspendCoroutine { cont ->
+    someLongComputation(params) { cont.resume(it) }
 } 
 ```
 
