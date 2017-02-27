@@ -4,13 +4,13 @@ import sequence.SequenceBuilder
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.EmptyCoroutineContext
-import kotlin.coroutines.experimental.createCoroutine
 import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.experimental.intrinsics.createCoroutineUnchecked
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 fun <T> buildSequence(block: suspend SequenceBuilder<T>.() -> Unit): Sequence<T> = Sequence {
     SequenceCoroutine<T>().apply {
-        nextStep = block.createCoroutine(receiver = this, completion = this)
+        nextStep = block.createCoroutineUnchecked(receiver = this, completion = this)
     }
 }
 

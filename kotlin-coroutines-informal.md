@@ -1,4 +1,4 @@
-# Coroutines for Kotlin (Revision 3.1)
+# Coroutines for Kotlin (Revision 3.2)
 
 * **Type**: Informal description
 * **Author**: Andrey Breslav
@@ -11,7 +11,7 @@ This is a description of coroutines in Kotlin. This concept is also known as, or
 
 - generators/yield
 - async/await
-- composable сontinuations
+- composable/delimited сontinuations
 
 Goals:
 
@@ -391,7 +391,7 @@ Moreover, like a future or promise, it may _complete_ with some result or except
   consisting of an invocation of some library-defined coroutine builder whose last argument is a suspending lambda:
  
 ```kotlin
-fun asyncTask() = future { ... }
+fun asyncTask() = async { ... }
 ```
 
 * A _suspension point_ — is a point during coroutine execution where the execution of the coroutine _may be suspended_. 
@@ -863,8 +863,8 @@ suspend fun AsynchronousFileChannel.aRead(buf: ByteBuffer): Int =
 ```
 
 > You can get this code [here](examples/io/io.kt).
-  Note: for large-scale production use coroutine-based IO libraries shall provide some means to cancel long-running
-  IO operations.
+  Note: the actual implementation in [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines)
+  supports cancellation to abort long-running IO operations.
 
 If you are dealing with lots of functions that all share the same type of callback, then you can define a common
 wrapper function to easily convert all of them to suspending functions. For example, 
@@ -1068,7 +1068,10 @@ fun <T> suspendingSequence(
 }
 ```
 
-> You can get full code [here](examples/suspendingSequence/suspendingSequence.kt)
+> You can get full code [here](examples/suspendingSequence/suspendingSequence.kt).
+  Note: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) has an implementation of
+  `Channel` primitive with the corresponding `produce{}` coroutine builder that provides more 
+  flexible implementation of the same concept.
 
 Let us take `newSingleThreadContext{}` context from
 [cooperative single-thread multitasking](#cooperative-single-thread-multitasking) section
@@ -1239,12 +1242,11 @@ Note, that this sample implementation of channels is based on a single
 lock to manage its internal wait lists. It makes it easier to understand and reason about. 
 However, it never runs user code under this lock and thus it is fully concurrent. 
 This lock only somewhat limits its scalability to a very large number of concurrent threads.
-This implementation can be optimized to use lock-free disjoint-access-parallel
-data structures to scale to a large number of cores without changing its user-facing APIs. 
-Channels are not built into the language, 
-their implementation code be readily examined, improved, or replaced.
 
-The other important observation is that this channel implementation is independent 
+> The actual implementation of channels and `select` in [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) 
+  is based on lock-free disjoint-access-parallel data structures.
+
+This channel implementation is independent 
 of the interceptor in the coroutine context. It can be used in UI applications
 under an event-thread interceptor as shown in the
 corresponding [continuation interceptor](#continuation-interceptor) section, or with any other one, or without
@@ -1269,7 +1271,9 @@ class Mutex {
 }
 ```
 
-> You can get full implementation [here](examples/mutex/mutex.kt)
+> You can get full implementation [here](examples/mutex/mutex.kt).
+  The actual implementation in [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) 
+  has a few additional functions.
 
 Using this implementation of non-blocking mutex
 [the 9th concurrency example of a tour of Go](https://tour.golang.org/concurrency/9)
@@ -1728,16 +1732,34 @@ suspend fun <T> suspendCoroutineOrReturn(block: (Continuation<T>) -> Any?): T
 ```
 
 It provides direct access to [continuation passing style](#continuation-passing-style) of suspending functions
-and direct access to [state machine](#state-machines) implementation of coroutine. The user of 
+and _unchecked_ reference to continuation. The user of 
 `suspendCoroutineOrReturn` bears full responsibility of following CPS result convention, but gains slightly
 better performance as a result. This convention is usually easy to follow for `buildSequence`/`yield`-like coroutines,
 but attempts to write asynchronous `await`-like suspending functions on top of `suspendCoroutineOrReturn` are
 **discouraged** as they are **extremely tricky** to implement correctly without the help of `suspendCoroutine`
 and errors in these implementation attempts are typically [heisenbugs](https://en.wikipedia.org/wiki/Heisenbug)
-that defy attempts to find and reproduce them via tests. 
+that defy attempts to find and reproduce them via tests.
+ 
+There are also functions called `createCoroutineUnchecked` with the following signatures:
+
+```kotlin
+fun <T> (suspend () -> T).createCoroutineUnchecked(completion: Continuation<T>): Continuation<Unit>
+fun <R, T> (suspend R.() -> T).createCoroutineUnchecked(receiver: R, completion: Continuation<T>): Continuation<Unit>
+```
+
+They return unchecked reference to the initial continuation (without an additional wrapper object).  
+Optimization version of `buildSequence` via `createCoroutineUnchecked` is shown below:
+
+```kotlin
+fun <T> buildSequence(block: suspend SequenceBuilder<T>.() -> Unit): Sequence<T> = Sequence {
+    SequenceCoroutine<T>().apply {
+        nextStep = block.createCoroutineUnchecked(receiver = this, completion = this)
+    }
+}
+```
 
 Optimized version of `yield` via `suspendCoroutineOrReturn` is shown below.
-Because `yield` always suspends to pass the control back to the consumer of the sequence, 
+Note, that because `yield` always suspends, 
 the corresponding block always returns `COROUTINE_SUSPENDED`.
 
 ```kotlin
@@ -1752,10 +1774,18 @@ override suspend fun yield(value: T) {
 ```
 
 > You can get full code [here](examples/sequence/buildSequenceOptimized.kt)
+
+The contents of `kotlin.coroutines.experimental.intrinsics` package are hidden from auto-completion in Kotlin 
+plugin for IDEA to protect them from accidental usage. You need to manually write the corresponding 
+import statement to get access to the above intrinsics.
  
 ## Revision history
 
 This section gives an overview of changes between various revisions of coroutines design.
+
+### Changes in revision 3.2
+
+* Added description of `createCoroutineUnchecked` intrinsic.
 
 ### Changes in revision 3.1
 
