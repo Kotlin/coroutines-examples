@@ -8,7 +8,7 @@ import kotlin.coroutines.experimental.intrinsics.*
 
    Note that in ES6-generators the first invocation of `next()` goes not accept a parameter, but
    just starts a coroutine until a subsequent `yield`, so to adopt it for the type-safe interface
-   we must declare `next` to be always invoked with a parameter and make our coroutine coroutine receive the first
+   we must declare `next` to be always invoked with a parameter and make our coroutine receive the first
    parameter to `next` when it starts (so it is not lost). We also have to introduce an additional parameter to
    `yieldAll` to start a delegated generator.
 */
