@@ -396,7 +396,7 @@ fun asyncTask() = async { ... }
 ```
 
 * A _suspension point_ — is a point during coroutine execution where the execution of the coroutine _may be suspended_. 
-Syntactically, a suspension point is an invocation of suspending function, but the actual
+Syntactically, a suspension point is an invocation of suspending function, but the _actual_
 suspension happens when the suspending function invokes the standard library primitive to suspend the execution.
 
 * A _continuation_ — is a state of the suspended coroutine at suspension point. It conceptually represents 
@@ -486,10 +486,17 @@ suspend fun <T> suspendCoroutine(block: (Continuation<T>) -> Unit): T
 ```
 
 When `suspendCoroutine` is called inside a coroutine (and it can _only_ be called inside
-a coroutine, because it is a suspending function) it _suspends_ the execution of coroutine, captures its
-state in a _continuation_ instance and passes this continuation to the specified `block` as an argument.
-To resume execution of the coroutine, the block may call either `continuation.resume()` or
+a coroutine, because it is a suspending function) it captures the execution state of a coroutine 
+in a _continuation_ instance and passes this continuation to the specified `block` as an argument.
+To resume execution of the coroutine, the block may invoke either `continuation.resume()` or
 `continuation.resumeWithException()` in this thread of in some other thread. 
+The _actual_ suspension of a coroutine happens when the `suspendCoroutine` block returns without invoking
+either of them. If continuation was resumed directly from inside of the block,
+then the coroutine is not considered to have been suspended and continues to execute.
+
+The value passed to `continuation.resume()` becomes the **return value** of `suspendCoroutine()`,
+which, in turn, becomes the return value of `.await()`.
+
 Resuming the same continuation more than once is not allowed and produces `IllegalStateException`.
 
 > Note: That is the key difference between coroutines in Kotlin and first-class delimited continuations in 
@@ -499,9 +506,6 @@ and we can more efficiently implement limited version of them. However, first-cl
 implemented as a separate library by cloning the state of the coroutine that is
 captured in continuation, so that its clone can be resumed again. This mechanism may be efficiently 
 provided by the standard library in the future.
-
-The value passed to `continuation.resume()` becomes the **return value** of `suspendCoroutine()`,
-which, in turn, becomes the return value of `.await()` when the coroutine _resumes_ its execution.
 
 ### Coroutine builders
 
@@ -678,6 +682,13 @@ val facade = continuation.context[ContinuationInterceptor]?.interceptContinuatio
  
 Coroutine framework caches the resulting facade for each actual instance of continuation. See
 [implementation details](#implementation-details) section for more details.
+
+> Note, that suspending functions like `await` may or may not actually suspend execution of
+a coroutine. For example, `await` implementation that was shown in [suspending functions][#suspending-functions] section
+does not actually suspend coroutine when a future is already complete (in this case it invokes `resume` immediately and 
+execution continues without the actual suspension). A continuation is intercepted only when the actual suspension 
+happens during execution of a coroutine, that is when `suspendCoroutine` block returns without invoking
+`resume`.
 
 Let us take a look at a concrete example code for `Swing` interceptor that dispatches execution onto
 Swing UI event dispatch thread. We start with a definition of a `SwingContinuation` wrapper class that
