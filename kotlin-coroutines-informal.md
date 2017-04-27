@@ -684,7 +684,7 @@ Coroutine framework caches the resulting facade for each actual instance of cont
 [implementation details](#implementation-details) section for more details.
 
 > Note, that suspending functions like `await` may or may not actually suspend execution of
-a coroutine. For example, `await` implementation that was shown in [suspending functions][#suspending-functions] section
+a coroutine. For example, `await` implementation that was shown in [suspending functions](#suspending-functions) section
 does not actually suspend coroutine when a future is already complete (in this case it invokes `resume` immediately and 
 execution continues without the actual suspension). A continuation is intercepted only when the actual suspension 
 happens during execution of a coroutine, that is when `suspendCoroutine` block returns without invoking
