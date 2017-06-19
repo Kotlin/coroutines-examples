@@ -215,7 +215,7 @@ val fibonacci = buildSequence {
 
 This code creates a lazy `Sequence` of [Fibonacci numbers](https://en.wikipedia.org/wiki/Fibonacci_number), 
 that is potentially infinite 
-(exactly like [Haskel's infinite lists](http://www.techrepublic.com/article/infinite-list-tricks-in-haskell/)). 
+(exactly like [Haskell's infinite lists](http://www.techrepublic.com/article/infinite-list-tricks-in-haskell/)). 
 We can request some of it, for example, through `take()`:
  
 ```kotlin
@@ -500,7 +500,7 @@ which, in turn, becomes the return value of `.await()`.
 Resuming the same continuation more than once is not allowed and produces `IllegalStateException`.
 
 > Note: That is the key difference between coroutines in Kotlin and first-class delimited continuations in 
-functional languages like Scheme or continuation monad in Haskel. The choice to support only limited resume-once 
+functional languages like Scheme or continuation monad in Haskell. The choice to support only limited resume-once 
 continuations is purely pragmatic as none of the intended [uses cases](#use-cases) need first-class continuations 
 and we can more efficiently implement limited version of them. However, first-class continuations can be 
 implemented as a separate library by cloning the state of the coroutine that is
