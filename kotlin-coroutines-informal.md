@@ -489,7 +489,7 @@ When `suspendCoroutine` is called inside a coroutine (and it can _only_ be calle
 a coroutine, because it is a suspending function) it captures the execution state of a coroutine 
 in a _continuation_ instance and passes this continuation to the specified `block` as an argument.
 To resume execution of the coroutine, the block may invoke either `continuation.resume()` or
-`continuation.resumeWithException()` in this thread of in some other thread. 
+`continuation.resumeWithException()` in this thread or in some other thread. 
 The _actual_ suspension of a coroutine happens when the `suspendCoroutine` block returns without invoking
 either of them. If continuation was resumed directly from inside of the block,
 then the coroutine is not considered to have been suspended and continues to execute.
