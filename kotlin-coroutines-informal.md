@@ -501,7 +501,7 @@ Resuming the same continuation more than once is not allowed and produces `Illeg
 
 > Note: That is the key difference between coroutines in Kotlin and first-class delimited continuations in 
 functional languages like Scheme or continuation monad in Haskell. The choice to support only limited resume-once 
-continuations is purely pragmatic as none of the intended [uses cases](#use-cases) need first-class continuations 
+continuations is purely pragmatic as none of the intended [use cases](#use-cases) need first-class continuations 
 and we can more efficiently implement limited version of them. However, first-class continuations can be 
 implemented as a separate library by cloning the state of the coroutine that is
 captured in continuation, so that its clone can be resumed again. This mechanism may be efficiently 
@@ -881,7 +881,7 @@ suspend fun AsynchronousFileChannel.aRead(buf: ByteBuffer): Int =
 If you are dealing with lots of functions that all share the same type of callback, then you can define a common
 wrapper function to easily convert all of them to suspending functions. For example, 
 [vert.x](http://vertx.io/) uses a particular convention that all its asynchronous functions receive 
-`Handler<AsyncResult<T>>` as a callback. To simply the use of arbitrary vert.x functions from coroutines
+`Handler<AsyncResult<T>>` as a callback. To simplify the use of arbitrary vert.x functions from coroutines,
 the following helper function can be defined:
 
 ```kotlin
@@ -1400,7 +1400,7 @@ launch(CommonPool) { // starts a coroutine
 
 You can use all the regular single-threaded mutable structures inside the scope of a particular coroutine.
 However, sharing mutable state _between_ coroutines is potentially dangerous. If you use a coroutine builder
-that install a dispatcher to resume all coroutines JS-style in the single event-dispatch thread, 
+that installs a dispatcher to resume all coroutines JS-style in the single event-dispatch thread, 
 like the `Swing` interceptor shown in [continuation interceptor](#continuation-interceptor) section,
 then you can safely work with all shared
 objects that are generally modified from this event-dispatch thread. 
