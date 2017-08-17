@@ -17,6 +17,10 @@ It is logically a part of [KEEP](https://github.com/Kotlin/KEEP).
     (Andrey Breslav at JVMLS 2016)
   * Part 2 (current design): [Kotlin Coroutines Reloaded](https://www.youtube.com/watch?v=3xalVUY69Ok&feature=youtu.be) 
     (Roman Elizarov at JVMLS 2017, [slides](https://www.slideshare.net/elizarov/kotlin-coroutines-reloaded)) 
+* Lock-Free Algorithms for Kotlin Coroutines:
+  * [Part 1 :](https://www.youtube.com/watch?v=W2dOOBN1OQI) 
+    (Roman Elizarov at SPTCC 2017, [slides](https://www.slideshare.net/elizarov/lockfree-algorithms-for-kotlin-coroutines))
+  * [Part 2](https://www.youtube.com/watch?v=iQsN_IDUTSc)
 
 ## Feedback
 
