@@ -343,78 +343,78 @@ but keep the old package around for those of your users who might need it for bi
 
 ### Terminology
 
-* A _coroutine_ — is an _instance_ of _suspendable computation_. It is conceptually similar to a thread, in the sense that
-it takes a block of code to run and has a similar life-cycle — it is _created_ and _started_, but it is not bound
-to any particular thread. It may _suspend_ its execution in one thread and _resume_ in another one. 
-Moreover, like a future or promise, it may _complete_ with some result or exception.
+ *  A _coroutine_ — is an _instance_ of _suspendable computation_. It is conceptually similar to a thread, in the sense that
+    it takes a block of code to run and has a similar life-cycle — it is _created_ and _started_, but it is not bound
+    to a ny particular thread. It may _suspend_ its execution in one thread and _resume_ in another one. 
+    Moreover, like a future or promise, it may _complete_ with some result or exception.
  
-* A _suspending function_ — a function that is marked with `suspend` modifier. It may _suspend_ execution of the code
-  without blocking the current thread of execution by invoking other suspending functions. A suspending function 
-  cannot be invoked from a regular code, but only from other suspending functions and from suspending lambdas (see below).
-  For example, `.await()` and `yield()`, as shown in [use cases](#use-cases), are suspending functions that may
-  be defined in a library. The standard library provides primitive suspending functions that are used to define 
-  all other suspending functions.
+ *  A _suspending function_ — a function that is marked with `suspend` modifier. It may _suspend_ execution of the code
+    without blocking the current thread of execution by invoking other suspending functions. A suspending function 
+    cannot be invoked from a regular code, but only from other suspending functions and from suspending lambdas (see below).
+    For example, `.await()` and `yield()`, as shown in [use cases](#use-cases), are suspending functions that may
+    be defined in a library. The standard library provides primitive suspending functions that are used to define 
+    all other suspending functions.
   
-* A _suspending lambda_ — a block of code that can be run in a coroutine.
-  It looks exactly like an ordinary [lambda expression](https://kotlinlang.org/docs/reference/lambdas.html)
-  but its functional type is marked with `suspend` modifier.
-  Just like a regular lambda expression is a short syntactic form for an anonymous local function,
-  a suspending lambda is a short syntactic form for an anonymous suspending function. It may _suspend_ execution of
-  the code without blocking the current thread of execution by invoking suspending functions.
-  For example, blocks of code in curly braces following `launch`, `future`, and `buildSequence` functions,
-  as shown in [use cases](#use-cases), are suspending lambdas.
+ *  A _suspending lambda_ — a block of code that can be run in a coroutine.
+    It looks exactly like an ordinary [lambda expression](https://kotlinlang.org/docs/reference/lambdas.html)
+    but its functional type is marked with `suspend` modifier.
+    Just like a regular lambda expression is a short syntactic form for an anonymous local function,
+    a suspending lambda is a short syntactic form for an anonymous suspending function. It may _suspend_ execution of
+    the code without blocking the current thread of execution by invoking suspending functions.
+    For example, blocks of code in curly braces following `launch`, `future`, and `buildSequence` functions,
+    as shown in [use cases](#use-cases), are suspending lambdas.
 
-> Note: Suspending lambdas may invoke suspending functions in all places of their code where a 
-  [non-local](https://kotlinlang.org/docs/reference/returns.html) `return` statement
-  from this lambda is allowed. That is, suspending function calls inside inline lambdas 
-  like [`apply{}` block](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/apply.html) are allowed,
-  but not in the `noinline` nor in `crossinline` inner lambda expressions. 
-  A _suspension_ is treated as a special kind of non-local control transfer.
+    > Note: Suspending lambdas may invoke suspending functions in all places of their code where a 
+    [non-local](https://kotlinlang.org/docs/reference/returns.html) `return` statement
+    from this lambda is allowed. That is, suspending function calls inside inline lambdas 
+    like [`apply{}` block](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/apply.html) are allowed,
+    but not in the `noinline` nor in `crossinline` inner lambda expressions. 
+    A _suspension_ is treated as a special kind of non-local control transfer.
 
-* A _suspending function type_ — is a function type for suspending functions and lambdas. It is just like 
-  a regular [function type](https://kotlinlang.org/docs/reference/lambdas.html#function-types), 
-  but with `suspend` modifier. For example, `suspend () -> Int` is a type of suspending
-  function without arguments that returns `Int`. A suspending function that is declared like `suspend fun foo(): Int`
-  conforms to this function type.
+ *  A _suspending function type_ — is a function type for suspending functions and lambdas. It is just like 
+    a regular [function type](https://kotlinlang.org/docs/reference/lambdas.html#function-types), 
+    but with `suspend` modifier. For example, `suspend () -> Int` is a type of suspending
+    function without arguments that returns `Int`. A suspending function that is declared like `suspend fun foo(): Int`
+    conforms to this function type.
 
-* A _coroutine builder_ — a function that takes some _suspending lambda_ as an argument, creates a coroutine,
-  and, optionally, gives access to its result in some form. For example, `launch{}`, `future{}`,
-  and `buildSequence{}` as shown in [use cases](#use-cases), are coroutine builders defined in a library.
-  The standard library provides primitive coroutine builders that are used to define all other coroutine builders.
+ *  A _coroutine builder_ — a function that takes some _suspending lambda_ as an argument, creates a coroutine,
+    and, optionally, gives access to its result in some form. For example, `launch{}`, `future{}`,
+    and `buildSequence{}` as shown in [use cases](#use-cases), are coroutine builders defined in a library.
+    The standard library provides primitive coroutine builders that are used to define all other coroutine builders.
 
-> Note: Some languages have hard-coded support for particular ways to create and start a coroutines that define
-  how their execution and result are represented. For example, `generate` _keyword_ may define a coroutine that 
-  returns a certain kind of iterable object, while `async` _keyword_ may define a coroutine that returns a
-  certain kind of promise or task. Kotlin does not have keywords or modifiers to define and start a coroutine. 
-  Coroutine builders are simply functions defined in a library. 
-  In case where a coroutine definition takes the form of a method body in another language, 
-  in Kotlin such method would typically be a regular method with an expression body, 
-  consisting of an invocation of some library-defined coroutine builder whose last argument is a suspending lambda:
+    > Note: Some languages have hard-coded support for particular ways to create and start a coroutines that define
+    how their execution and result are represented. For example, `generate` _keyword_ may define a coroutine that 
+    returns a certain kind of iterable object, while `async` _keyword_ may define a coroutine that returns a
+    certain kind of promise or task. Kotlin does not have keywords or modifiers to define and start a coroutine. 
+    Coroutine builders are simply functions defined in a library. 
+    In case where a coroutine definition takes the form of a method body in another language, 
+    in Kotlin such method would typically be a regular method with an expression body, 
+    consisting of an invocation of some library-defined coroutine builder whose last argument is a suspending lambda:
  
-```kotlin
-fun asyncTask() = async { ... }
-```
+    ```kotlin
+    fun asyncTask() = async { ... }
+    ```
 
-* A _suspension point_ — is a point during coroutine execution where the execution of the coroutine _may be suspended_. 
-Syntactically, a suspension point is an invocation of suspending function, but the _actual_
-suspension happens when the suspending function invokes the standard library primitive to suspend the execution.
+ *  A _suspension point_ — is a point during coroutine execution where the execution of the coroutine _may be suspended_. 
+    Syntactically, a suspension point is an invocation of suspending function, but the _actual_
+    suspension happens when the suspending function invokes the standard library primitive to suspend the execution.
 
-* A _continuation_ — is a state of the suspended coroutine at suspension point. It conceptually represents 
-the rest of its execution after the suspension point. For example:
+ *  A _continuation_ — is a state of the suspended coroutine at suspension point. It conceptually represents 
+    the rest of its execution after the suspension point. For example:
 
-```kotlin
-buildSequence {
-    for (i in 1..10) yield(i * i)
-    println("over")
-}  
-```  
+    ```kotlin
+    buildSequence {
+        for (i in 1..10) yield(i * i)
+        println("over")
+    }  
+    ```  
 
-Here, every time the coroutine is suspended at a call to suspending function `yield()`, 
-_the rest of its execution_ is represented as a continuation, so we have 10 continuations: 
-first runs the loop with `i = 2` and suspends, second runs the loop with `i = 3` and suspends, etc, 
-the last one prints "over" and completes the coroutine. The coroutine that is _created_, but is not 
-_started_ yet, is represented by its _initial continuation_ of type `Continuation<Unit>` that consists of
-its whole execution.
+    Here, every time the coroutine is suspended at a call to suspending function `yield()`, 
+    _the rest of its execution_ is represented as a continuation, so we have 10 continuations: 
+    first runs the loop with `i = 2` and suspends, second runs the loop with `i = 3` and suspends, etc, 
+    the last one prints "over" and completes the coroutine. The coroutine that is _created_, but is not 
+    _started_ yet, is represented by its _initial continuation_ of type `Continuation<Unit>` that consists of
+    its whole execution.
 
 As mentioned above, one of the driving requirements for coroutines is flexibility:
 we want to be able to support many existing asynchronous APIs and other use cases and minimize 
