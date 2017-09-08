@@ -345,7 +345,7 @@ but keep the old package around for those of your users who might need it for bi
 
  *  A _coroutine_ — is an _instance_ of _suspendable computation_. It is conceptually similar to a thread, in the sense that
     it takes a block of code to run and has a similar life-cycle — it is _created_ and _started_, but it is not bound
-    to a ny particular thread. It may _suspend_ its execution in one thread and _resume_ in another one. 
+    to any particular thread. It may _suspend_ its execution in one thread and _resume_ in another one. 
     Moreover, like a future or promise, it may _complete_ with some result or exception.
  
  *  A _suspending function_ — a function that is marked with `suspend` modifier. It may _suspend_ execution of the code
