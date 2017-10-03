@@ -332,7 +332,7 @@ When the final design is ready, it will be published under `kotlin.coroutines`,
 while the experimental package will stay for a while, so that the old binaries will be compatible and continue to work.
 
 Every library that uses coroutines in its public API should do the same,  
-so if you are writing a library that it here to stay and you care about the users of your future versions, 
+so if you are writing a library that is here to stay and you care about the users of your future versions, 
 you will also need to name your package something like `org.my.library.experimental`. 
 And when the final design of coroutines comes, drop the `experimental` suffix from the main API, 
 but keep the old package around for those of your users who might need it for binary compatibility.
