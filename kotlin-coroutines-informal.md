@@ -1115,7 +1115,7 @@ for (value in seq) { // suspend while waiting for producer
 ```
 
 > You can find a worked out example with some logging that illustrates the execution
-  [here](examples/suspendingSequence-example.kt)
+  [here](examples/suspendingSequence/suspendingSequence-example.kt)
 
 ### Channels
 
