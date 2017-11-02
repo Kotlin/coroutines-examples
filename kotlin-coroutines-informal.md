@@ -600,7 +600,7 @@ The `CoroutineContext` itself has four core operations available on it:
 
 * Operator `get` provides type-safe access to an element for a given key. It can be used with `[..]` notation
   as explained in [Kotlin operator overloading](https://kotlinlang.org/docs/reference/operator-overloading.html).
-* Function `fold` works likes [`Collection.fold`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/fold.html)
+* Function `fold` works like [`Collection.fold`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/fold.html)
   extension in the standard library and provides means to iterate all elements in the context.
 * Operator `plus` works like [`Set.plus`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/plus.html)
   extension in the standard library and returns a combination of two contexts with elements on the right-hand side
