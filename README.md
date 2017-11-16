@@ -10,8 +10,9 @@ It is logically a part of [KEEP](https://github.com/Kotlin/KEEP).
 
 ## Videos and presentations
 
-* [Introduction to Kotlin Coroutines](https://vimeo.com/222499934) from a user standpoint 
-  (Roman Elizarov at GeekOut 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-kotlin-coroutines))
+* From a user standpoint:
+   * [Introduction to Coroutines](https://www.youtube.com/watch?v=_hfBv0a09Jc) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/introduction-to-coroutines-kotlinconf-2017))
+   * [Deep dive into Coroutines](https://www.youtube.com/watch?v=YrrUCSi72E8) (Roman Elizarov at KotlinConf 2017, [slides](https://www.slideshare.net/elizarov/deep-dive-into-coroutines-on-jvm-kotlinconf-2017))
 * Language design overview:
   * Part 1 (prototype design): [Coroutines in Kotlin](https://www.youtube.com/watch?v=4W3ruTWUhpw) 
     (Andrey Breslav at JVMLS 2016)
