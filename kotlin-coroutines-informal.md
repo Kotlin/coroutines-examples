@@ -972,7 +972,7 @@ suspend fun Swing.delay(millis: Int): Unit = suspendCoroutine { cont ->
 ```
 
 > You can get this code [here](examples/context/swing-delay.kt).
-  Node: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) implementation of `delay` is aware of
+  Note: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) implementation of `delay` is aware of
   interceptor-specific sleep facilities and automatically uses the above approach where appropriate. 
 
 ### Cooperative single-thread multitasking
@@ -1019,7 +1019,7 @@ fun main(args: Array<String>) {
 ```
 
 > You can get fully working example [here](examples/context/threadContext-example.kt).
-  Node: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) has ready-to-use implementation of
+  Note: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) has ready-to-use implementation of
   `newSingleThreadContext`. 
 
 If your whole application is based on a single-threaded execution, you can define your own helper coroutine
