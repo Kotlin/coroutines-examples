@@ -950,7 +950,7 @@ suspend fun delay(time: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): Unit = su
 ```
 
 > You can get this code [here](examples/delay/delay.kt).
-  Node: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) also provides `delay` function.
+  Note: [kotlinx.coroutines](https://github.com/kotlin/kotlinx.coroutines) also provides `delay` function.
 
 Note, that this kind of `delay` function resumes the coroutines that are using it in its single "scheduler" thread.
 The coroutines that are using [interceptor](#continuation-interceptor) like `Swing` will not stay to execute in this thread,
