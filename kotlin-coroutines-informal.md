@@ -118,7 +118,7 @@ launch(CommonPool) {
 }
 ```
 
-The `aRead()` and `aWrite()` here are special _suspending functions_ — they _suspend_ execution 
+The `aRead()` and `aWrite()` here are special _suspending functions_ — they can _suspend_ execution 
 (which does not mean blocking the thread it has been running on) and _resume_ when the call has completed. 
 If we squint our eyes just enough to imagine that all the code after `aRead()` has been wrapped in a 
 lambda and passed to `aRead()` as a callback, and the same has been done for `aWrite()`, 
