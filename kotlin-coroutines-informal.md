@@ -355,7 +355,7 @@ but keep the old package around for those of your users who might need it for bi
     be defined in a library. The standard library provides primitive suspending functions that are used to define 
     all other suspending functions.
   
- *  A _suspending lambda_ — a block of code that can be run in a coroutine.
+ *  A _suspending lambda_ — a block of code that have to run in a coroutine.
     It looks exactly like an ordinary [lambda expression](https://kotlinlang.org/docs/reference/lambdas.html)
     but its functional type is marked with `suspend` modifier.
     Just like a regular lambda expression is a short syntactic form for an anonymous local function,
