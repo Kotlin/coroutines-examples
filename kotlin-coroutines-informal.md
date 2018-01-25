@@ -1391,10 +1391,10 @@ of code is perfectly safe inside a coroutine:
 ```kotlin
 launch(CommonPool) { // starts a coroutine
     val m = mutableMapOf<String, String>()
-    val v1 = someAsyncTask1().await() // suspends on await
-    m["k1"] = v1 // modify map when resumed
-    val v2 = someAsyncTask2().await() // suspends on await
-    m["k2"] = v2 // modify map when resumed
+    val v1 = someAsyncTask1() // start some async task
+    val v2 = someAsyncTask2() // start some async task
+    m["k1"] = v1.await() // map modification waiting on await
+    m["k2"] = v2.await() // map modification waiting on await
 }
 ```
 
