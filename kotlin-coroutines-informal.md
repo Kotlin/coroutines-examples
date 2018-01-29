@@ -163,8 +163,8 @@ We'll use an imaginary API here, to apply an overlay to an image:
 
 ```kotlin
 val future = runAfterBoth(
-    asyncLoadImage("...original..."), // creates a Future 
-    asyncLoadImage("...overlay...")   // creates a Future
+    loadImageAsync("...original..."), // creates a Future 
+    loadImageAsync("...overlay...")   // creates a Future
 ) {
     original, overlay ->
     ...
@@ -176,8 +176,8 @@ With coroutines, this could be rewritten as
 
 ```kotlin
 val future = future {
-    val original = asyncLoadImage("...original...") // creates a Future
-    val overlay = asyncLoadImage("...overlay...")   // creates a Future
+    val original = loadImageAsync("...original...") // creates a Future
+    val overlay = loadImageAsync("...overlay...")   // creates a Future
     ...
     // suspend while awaiting the loading of the images
     // then run `applyOverlay(...)` when they are both loaded
