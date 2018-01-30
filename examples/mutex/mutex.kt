@@ -30,13 +30,10 @@ class Mutex {
                 val curState = state.get()
                 if (curState == -1) {
                     if (state.compareAndSet(-1, 0)) {
-                        // locked successfully this time, there were no _other_ waiter -- mark us as resumed,
-                        // but check we were already resumed in between waiters.add(...) and state.cas(...) by
-                        // somebody else
-                        if (waiter.resumed)
-                            break@loop // was already resumed by some other thread -> indicate suspend
-                        waiter.resumed = true // mark ourselves as already resumed in queue
-                        // for simplicity, don't attempt to unlink the  Waiter object from the queue
+                        // Locked successfully this time, there were no _other_ waiter.
+                        // For simplicity, we don't attempt to unlink the Waiter object from the queue,
+                        // but mark ourselves as already resumed in queue (retrieveWaiter will skip marked entries).
+                        waiter.resumed = true
                         return@sc Unit // don't suspend, but continue execution with lock
 
                     }
@@ -75,7 +72,7 @@ class Mutex {
     private fun retrieveWaiter(): Waiter? {
         while (true) {
             val waiter = waiters.poll() ?: return null
-            // see if this is an _actual_ waiter (not resumed yet by some previous mutex holder)
+            // see if this is an _actual_ waiter (not a left-over that had actually acquired the lock in the slow path)
             if (!waiter.resumed)
                 return waiter
             // otherwise it is an artifact, just look for the next one
