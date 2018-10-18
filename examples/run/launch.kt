@@ -1,17 +1,11 @@
 package run
 
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import kotlin.coroutines.*
 
-fun launch(context: CoroutineContext, block: suspend () -> Unit) =
-        block.startCoroutine(StandaloneCoroutine(context))
-
-private class StandaloneCoroutine(override val context: CoroutineContext): Continuation<Unit> {
-    override fun resume(value: Unit) {}
-
-    override fun resumeWithException(exception: Throwable) {
-        val currentThread = Thread.currentThread()
-        currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
-    }
-}
+fun launch(context: CoroutineContext = EmptyCoroutineContext, block: suspend () -> Unit) =
+    block.startCoroutine(Continuation(context) { result ->
+        result.onFailure { exception ->
+            val currentThread = Thread.currentThread()
+            currentThread.uncaughtExceptionHandler.uncaughtException(currentThread, exception)
+        }
+    })

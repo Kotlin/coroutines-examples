@@ -1,8 +1,7 @@
 package channel.example1
 
-import channel.go
-import channel.mainBlocking
-import delay.delay
+import channel.*
+import delay.*
 
 // https://tour.golang.org/concurrency/1
 

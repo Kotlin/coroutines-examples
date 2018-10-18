@@ -1,11 +1,11 @@
 package io
 
-import context.Swing
-import run.launch
-import util.log
-import java.nio.ByteBuffer
-import java.nio.channels.AsynchronousFileChannel
-import java.nio.file.Paths
+import context.*
+import run.*
+import util.*
+import java.nio.*
+import java.nio.channels.*
+import java.nio.file.*
 
 fun main(args: Array<String>) {
     launch(Swing) {

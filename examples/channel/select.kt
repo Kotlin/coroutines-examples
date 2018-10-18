@@ -1,9 +1,9 @@
 package channel
 
-import kotlin.coroutines.experimental.suspendCoroutine
+import kotlin.coroutines.*
 
-inline suspend fun <R> select(block: SelectorBuilder<R>.() -> Unit): R =
-        SelectorBuilder<R>().apply { block() }.doSelect()
+suspend inline fun <R> select(block: SelectorBuilder<R>.() -> Unit): R =
+    SelectorBuilder<R>().apply { block() }.doSelect()
 
 class SelectorBuilder<R> {
     private val cases = mutableListOf<SelectCase<*, R>>()
@@ -23,7 +23,7 @@ class SelectorBuilder<R> {
     suspend fun doSelect(): R {
         require(!cases.isEmpty())
         return suspendCoroutine { c ->
-            val selector = Selector<R>(c, cases)
+            val selector = Selector(c, cases)
             for (case in cases) {
                 case.selector = selector
                 if (case.select(selector)) break
@@ -32,7 +32,7 @@ class SelectorBuilder<R> {
     }
 }
 
-suspend fun whileSelect(block: SelectorBuilder<Boolean>.() -> Unit): Unit {
+suspend fun whileSelect(block: SelectorBuilder<Boolean>.() -> Unit) {
     while(select(block)) { /*loop*/ }
 }
 

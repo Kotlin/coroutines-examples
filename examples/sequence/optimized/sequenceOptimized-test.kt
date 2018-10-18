@@ -1,6 +1,6 @@
 package sequence.optimized
 
-val fibonacci: Sequence<Int> = buildSequence {
+val fibonacci: Sequence<Int> = sequence {
     yield(1) // first Fibonacci number
     var cur = 1
     var next = 1

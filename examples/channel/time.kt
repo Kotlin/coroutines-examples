@@ -1,7 +1,7 @@
 package channel
 
-import delay.delay
-import java.time.Instant
+import delay.*
+import java.time.*
 
 object Time {
     fun tick(millis: Long): ReceiveChannel<Instant> {

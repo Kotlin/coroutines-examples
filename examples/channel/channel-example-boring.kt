@@ -1,10 +1,7 @@
 package channel.boring
 
-import channel.Channel
-import channel.ReceiveChannel
-import channel.go
-import channel.mainBlocking
-import delay.delay
+import channel.*
+import delay.*
 import java.util.*
 
 // https://talks.golang.org/2012/concurrency.slide#25

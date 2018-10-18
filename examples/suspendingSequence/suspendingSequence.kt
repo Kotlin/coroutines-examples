@@ -1,8 +1,9 @@
 package suspendingSequence
 
-import kotlin.coroutines.experimental.*
+import kotlin.coroutines.*
+import kotlin.experimental.*
 
-interface SuspendingSequenceBuilder<in T> {
+interface SuspendingSequenceScope<in T> {
     suspend fun yield(value: T)
 }
 
@@ -15,26 +16,27 @@ interface SuspendingIterator<out T> {
     suspend operator fun next(): T
 }
 
+@UseExperimental(ExperimentalTypeInference::class)
 fun <T> suspendingSequence(
-        context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend SuspendingSequenceBuilder<T>.() -> Unit
+    context: CoroutineContext = EmptyCoroutineContext,
+    @BuilderInference block: suspend SuspendingSequenceScope<T>.() -> Unit
 ): SuspendingSequence<T> = object : SuspendingSequence<T> {
     override fun iterator(): SuspendingIterator<T> = suspendingIterator(context, block)
-
 }
 
 fun <T> suspendingIterator(
-        context: CoroutineContext = EmptyCoroutineContext,
-        block: suspend SuspendingSequenceBuilder<T>.() -> Unit
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend SuspendingSequenceScope<T>.() -> Unit
 ): SuspendingIterator<T> =
-        SuspendingIteratorCoroutine<T>(context).apply {
-            nextStep = block.createCoroutine(receiver = this, completion = this)
-        }
+    SuspendingIteratorCoroutine<T>(context).apply {
+        nextStep = block.createCoroutine(receiver = this, completion = this)
+    }
 
 class SuspendingIteratorCoroutine<T>(
     override val context: CoroutineContext
-): SuspendingIterator<T>, SuspendingSequenceBuilder<T>, Continuation<Unit> {
+) : SuspendingIterator<T>, SuspendingSequenceScope<T>, Continuation<Unit> {
     enum class State { INITIAL, COMPUTING_HAS_NEXT, COMPUTING_NEXT, COMPUTED, DONE }
+
     var state: State = State.INITIAL
     var nextValue: T? = null
     var nextStep: Continuation<Unit>? = null // null when sequence complete
@@ -69,6 +71,7 @@ class SuspendingIteratorCoroutine<T>(
             State.INITIAL -> return computeNext()
             State.COMPUTED -> {
                 state = State.INITIAL
+                @Suppress("UNCHECKED_CAST")
                 return nextValue as T
             }
             State.DONE -> throw NoSuchElementException()
@@ -92,15 +95,16 @@ class SuspendingIteratorCoroutine<T>(
     }
 
     // Completion continuation implementation
-    override fun resume(value: Unit) {
+    override fun resumeWith(result: Result<Unit>) {
         nextStep = null
-        resumeIterator(false)
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        nextStep = null
-        state = State.DONE
-        computeContinuation!!.resumeWithException(exception)
+        result
+            .onSuccess {
+                resumeIterator(false)
+            }
+            .onFailure { exception ->
+                state = State.DONE
+                computeContinuation!!.resumeWithException(exception)
+            }
     }
 
     // Generator implementation

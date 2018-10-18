@@ -1,7 +1,7 @@
 package context
 
-import future.future
-import util.log
+import future.*
+import util.*
 
 fun main(args: Array<String>) {
     future(Swing) {

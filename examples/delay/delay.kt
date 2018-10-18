@@ -1,8 +1,7 @@
 package delay
 
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.experimental.suspendCoroutine
+import java.util.concurrent.*
+import kotlin.coroutines.*
 
 private val executor = Executors.newSingleThreadScheduledExecutor {
     Thread(it, "scheduler").apply { isDaemon = true }

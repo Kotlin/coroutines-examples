@@ -1,9 +1,8 @@
 package context
 
-import future.await
-import future.future
-import run.runBlocking
-import util.log
+import future.*
+import run.*
+import util.*
 
 fun main(args: Array<String>) = runBlocking(CommonPool) {
     // multithreaded pool

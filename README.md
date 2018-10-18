@@ -5,8 +5,8 @@ It is logically a part of [KEEP](https://github.com/Kotlin/KEEP).
 
 ## Navigate
 
-* [Description of the current implementation](kotlin-coroutines-informal.md) (KEEP for Kotlin Coroutines)
-* [Coroutines support library for Kotlin](https://github.com/kotlin/kotlinx.coroutines) (`kotlinx.coroutines`)
+* [Kotlin coroutines design document](kotlin-coroutines-informal.md) (KEEP for Kotlin Coroutines)
+* [Kotlin coroutines support library](https://github.com/kotlin/kotlinx.coroutines) (`kotlinx.coroutines`)
 
 ## Videos and presentations
 
@@ -27,7 +27,5 @@ It is logically a part of [KEEP](https://github.com/Kotlin/KEEP).
 
 Please, submit feedback to:
 
-* [Kotlin YouTrack](http://kotl.in/issue) on issues with implementation of coroutines in Kotlin compiler.
+* [Kotlin YouTrack](http://kotl.in/issue) on issues with implementation of coroutines in Kotlin compiler and feature requests.
 * [`kotlinx.coroutines`](https://github.com/Kotlin/kotlinx.coroutines/issues) on issues in supporting libraries.
-* [`kotlin-coroutines`](https://github.com/JetBrains/kotlin-coroutines/issues) with suggestions on 
-  language design improvements for coroutines. 

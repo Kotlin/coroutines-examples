@@ -1,8 +1,8 @@
 package delay
 
-import context.Swing
-import future.future
-import util.log
+import context.*
+import future.*
+import util.*
 
 fun main(args: Array<String>) {
     future(Swing) {

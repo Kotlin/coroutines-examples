@@ -1,11 +1,9 @@
 package channel
 
 import java.util.*
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.startCoroutine
-import kotlin.coroutines.experimental.suspendCoroutine
+import java.util.concurrent.atomic.*
+import java.util.concurrent.locks.*
+import kotlin.coroutines.*
 
 interface SendChannel<T> {
     suspend fun send(value: T)
@@ -147,6 +145,7 @@ class Channel<T>(val capacity: Int = 1) : SendChannel<T>, ReceiveChannel<T> {
         if (wasClosed)
             a.resumeClosed()
         else
+            @Suppress("UNCHECKED_CAST")
             a.resumeReceive(result as T)
         return true
     }
@@ -183,6 +182,7 @@ class Channel<T>(val capacity: Int = 1) : SendChannel<T>, ReceiveChannel<T> {
         suspend override fun next(): T {
             // return value previous acquired by hasNext
             if (computedNext) {
+                @Suppress("UNCHECKED_CAST")
                 val result = nextValue as T
                 computedNext = false
                 nextValue = null

@@ -1,10 +1,7 @@
 package channel.example2a
 
-import channel.Channel
-import channel.SendChannel
-import channel.go
-import channel.mainBlocking
-import kotlin.system.measureTimeMillis
+import channel.*
+import kotlin.system.*
 
 suspend fun sum(s: List<Int>, c: SendChannel<Int>) {
     // simulate long-running CPU-consuming computation

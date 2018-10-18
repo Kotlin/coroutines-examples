@@ -1,9 +1,9 @@
 package suspendingSequence
 
-import context.newSingleThreadContext
-import delay.delay
-import run.runBlocking
-import util.log
+import context.*
+import delay.*
+import run.*
+import util.*
 import java.util.*
 
 fun main(args: Array<String>) {

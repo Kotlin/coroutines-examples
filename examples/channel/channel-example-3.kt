@@ -1,7 +1,6 @@
 package channel.example3
 
-import channel.Channel
-import channel.mainBlocking
+import channel.*
 
 // https://tour.golang.org/concurrency/3
 

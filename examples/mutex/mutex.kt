@@ -1,10 +1,9 @@
 package mutex
 
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
-import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
+import java.util.concurrent.*
+import java.util.concurrent.atomic.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 class Mutex {
     /*
@@ -22,9 +21,9 @@ class Mutex {
         // fast path -- try lock uncontended
         if (state.compareAndSet(-1, 0)) return
         // slow path -- other cases
-        return suspendCoroutineOrReturn sc@ { c ->
+        return suspendCoroutineUninterceptedOrReturn sc@ { uc ->
             // tentatively add a waiter before locking (and we can get resumed because of that!)
-            val waiter = Waiter(c)
+            val waiter = Waiter(uc.intercepted())
             waiters.add(waiter)
             loop@ while (true) { // lock-free loop on state
                 val curState = state.get()

@@ -1,15 +1,15 @@
 package context
 
-import run.runBlocking
-import kotlin.coroutines.experimental.suspendCoroutine
+import run.*
+import kotlin.coroutines.*
 
-suspend fun secureAwait(): Unit = suspendCoroutine { cont ->
-    println("Current user is ${cont.context[AuthUser]?.name}")
-    cont.resume(Unit)
+suspend fun doSomething() {
+    val currentUser = coroutineContext[AuthUser]?.name ?: throw SecurityException("unauthorized")
+    println("Current user is $currentUser")
 }
 
 fun main(args: Array<String>) {
     runBlocking(AuthUser("admin")) {
-        secureAwait()
+        doSomething()
     }
 }

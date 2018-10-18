@@ -1,7 +1,7 @@
 package channel.multiplexing2
 
 import channel.*
-import channel.boring.boring
+import channel.boring.*
 
 // https://talks.golang.org/2012/concurrency.slide#27
 

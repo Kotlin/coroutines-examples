@@ -1,9 +1,7 @@
 package sequence
 
-import sequence.buildSequence
-
 // inferred type is Sequence<Int>
-val fibonacci = buildSequence {
+val fibonacci = sequence {
     yield(1) // first Fibonacci number
     var cur = 1
     var next = 1

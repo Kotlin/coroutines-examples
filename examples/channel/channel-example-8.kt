@@ -1,9 +1,6 @@
 package channel.example8
 
-import channel.Channel
-import channel.SendChannel
-import channel.go
-import channel.mainBlocking
+import channel.*
 import java.util.*
 
 // https://tour.golang.org/concurrency/7

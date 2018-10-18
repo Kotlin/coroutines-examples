@@ -1,9 +1,7 @@
 package channel.example6
 
-import channel.Time
-import channel.mainBlocking
-import channel.whileSelect
-import delay.delay
+import channel.*
+import delay.*
 
 // https://tour.golang.org/concurrency/6
 

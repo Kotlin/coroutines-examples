@@ -1,9 +1,6 @@
 package channel.example2
 
-import channel.Channel
-import channel.SendChannel
-import channel.go
-import channel.mainBlocking
+import channel.*
 
 suspend fun sum(s: List<Int>, c: SendChannel<Int>) {
     var sum = 0

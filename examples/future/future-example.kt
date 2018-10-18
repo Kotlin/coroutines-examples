@@ -1,6 +1,6 @@
 package future
 
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.*
 
 fun foo(): CompletableFuture<String> = CompletableFuture.supplyAsync { "foo" }
 fun bar(v: String): CompletableFuture<String> = CompletableFuture.supplyAsync { "bar with $v" }

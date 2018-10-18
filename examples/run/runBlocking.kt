@@ -1,41 +1,44 @@
 package run
 
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineContext
-import kotlin.coroutines.experimental.startCoroutine
+import java.util.concurrent.locks.*
+import kotlin.coroutines.*
 
 fun <T> runBlocking(context: CoroutineContext, block: suspend () -> T): T =
-        BlockingCoroutine<T>(context).also { block.startCoroutine(it) }.getValue()
+    BlockingCoroutine<T>(context).also { block.startCoroutine(it) }.getValue()
 
-private class BlockingCoroutine<T>(override val context: CoroutineContext): Continuation<T> {
+private class BlockingCoroutine<T>(override val context: CoroutineContext) : Continuation<T> {
     private val lock = ReentrantLock()
     private val done = lock.newCondition()
-    private var completed = false
-    private var value: T? = null
-    private var exception: Throwable? = null
+    private var result: Result<T>? = null
 
     private inline fun <T> locked(block: () -> T): T {
         lock.lock()
-        return try { block() }
-                finally { lock.unlock() }
+        return try {
+            block()
+        } finally {
+            lock.unlock()
+        }
     }
 
-    override fun resume(value: T) = locked {
-        this.value = value
-        completed = true
+    private inline fun loop(block: () -> Unit): Nothing {
+        while (true) {
+            block()
+        }
+    }
+
+    override fun resumeWith(result: Result<T>) = locked {
+        this.result = result
         done.signal()
     }
 
-    override fun resumeWithException(exception: Throwable) = locked {
-        this.exception = exception
-        completed = true
-        done.signal()
-    }
-
-    fun getValue(): T = locked {
-        while (!completed) done.awaitUninterruptibly()
-        exception?.let { throw it }
-        value as T
+    fun getValue(): T = locked<T> {
+        loop {
+            val result = this.result
+            if (result == null) {
+                done.awaitUninterruptibly()
+            } else {
+                return@locked result.getOrThrow()
+            }
+        }
     }
 }

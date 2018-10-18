@@ -1,7 +1,7 @@
 package channel
 
-import context.CommonPool
-import run.runBlocking
+import context.*
+import run.*
 
 fun mainBlocking(block: suspend () -> Unit) = runBlocking(CommonPool, block)
 
