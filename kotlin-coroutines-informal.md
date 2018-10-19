@@ -1886,7 +1886,7 @@ uses `kotlin.coroutines` package. The experimental package is still available in
 code that was compiled with experimental coroutines still works as before.
 
 Kotlin 1.3 compiler provides support for invoking experimental suspending functions and passing suspending
-lambdas to the libraries that were compiled with experimental coroutines. Behind the scene, the 
+lambdas to the libraries that were compiled with experimental coroutines. Behind the scenes, the 
 adapters between the corresponding stable and experimental coroutine interfaces are created. 
 
 ## Revision history
