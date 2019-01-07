@@ -24,7 +24,7 @@ private class SequenceCoroutine<T>: AbstractIterator<T>(), SequenceScope<T>, Con
     // Completion continuation implementation
     override val context: CoroutineContext get() = EmptyCoroutineContext
 
-    override fun resumeWith(result: Result<Unit>) {
+    override fun resumeWith(result: SuccessOrFailure<Unit>) {
         result.getOrThrow() // bail out on error
         done()
     }

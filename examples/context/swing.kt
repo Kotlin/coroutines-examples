@@ -9,9 +9,10 @@ object Swing : AbstractCoroutineContextElement(ContinuationInterceptor), Continu
 }
 
 private class SwingContinuation<T>(val cont: Continuation<T>) : Continuation<T> {
+
     override val context: CoroutineContext = cont.context
 
-    override fun resumeWith(result: Result<T>) {
+    override fun resumeWith(result: SuccessOrFailure<T>) {
         SwingUtilities.invokeLater { cont.resumeWith(result) }
     }
 }

@@ -95,16 +95,14 @@ class SuspendingIteratorCoroutine<T>(
     }
 
     // Completion continuation implementation
-    override fun resumeWith(result: Result<Unit>) {
+    override fun resumeWith(result: SuccessOrFailure<Unit>) {
         nextStep = null
-        result
-            .onSuccess {
-                resumeIterator(false)
-            }
-            .onFailure { exception ->
-                state = State.DONE
-                computeContinuation!!.resumeWithException(exception)
-            }
+        if (result.isSuccess) {
+            resumeIterator(false)
+        }else {
+            state = State.DONE
+            computeContinuation!!.resumeWithException(result.exceptionOrNull()!!)
+        }
     }
 
     // Generator implementation

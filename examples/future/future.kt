@@ -8,9 +8,11 @@ fun <T> future(context: CoroutineContext = CommonPool, block: suspend () -> T): 
         CompletableFutureCoroutine<T>(context).also { block.startCoroutine(completion = it) }
 
 class CompletableFutureCoroutine<T>(override val context: CoroutineContext) : CompletableFuture<T>(), Continuation<T> {
-    override fun resumeWith(result: Result<T>) {
-        result
-            .onSuccess { complete(it) }
-            .onFailure { completeExceptionally(it) }
+    override fun resumeWith(result: SuccessOrFailure<T>) {
+        if(result.isSuccess) {
+            complete(result.getOrNull())
+        }else {
+            completeExceptionally(result.exceptionOrNull())
+        }
     }
 }

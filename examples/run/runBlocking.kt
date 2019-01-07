@@ -9,7 +9,7 @@ fun <T> runBlocking(context: CoroutineContext, block: suspend () -> T): T =
 private class BlockingCoroutine<T>(override val context: CoroutineContext) : Continuation<T> {
     private val lock = ReentrantLock()
     private val done = lock.newCondition()
-    private var result: Result<T>? = null
+    private var result: SuccessOrFailure<T>? = null
 
     private inline fun <T> locked(block: () -> T): T {
         lock.lock()
@@ -26,7 +26,7 @@ private class BlockingCoroutine<T>(override val context: CoroutineContext) : Con
         }
     }
 
-    override fun resumeWith(result: Result<T>) = locked {
+    override fun resumeWith(result: SuccessOrFailure<T>) {
         this.result = result
         done.signal()
     }

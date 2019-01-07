@@ -26,7 +26,8 @@ private class PoolContinuation<T>(
 ) : Continuation<T> {
     override val context: CoroutineContext = cont.context
 
-    override fun resumeWith(result: Result<T>) {
-        pool.execute { cont.resumeWith(result) }
+    override fun resumeWith(result: SuccessOrFailure<T>) {
+        pool.execute { cont.resumeWith(result)}
     }
+
 }

@@ -66,9 +66,11 @@ internal class GeneratorCoroutine<T, R>: Generator<T, R>, GeneratorBuilder<T, R>
 
     override val context: CoroutineContext get() = EmptyCoroutineContext
 
-    override fun resumeWith(result: Result<Unit>) {
-        result
-            .onSuccess { lastValue = null }
-            .onFailure { lastException = it }
+    override fun resumeWith(result: SuccessOrFailure<Unit>) {
+        if (result.isSuccess) {
+            lastValue = null
+        }else {
+            lastException = result.exceptionOrNull()
+        }
     }
 }

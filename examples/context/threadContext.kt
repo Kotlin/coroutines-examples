@@ -29,7 +29,7 @@ class ThreadContext(
     private inner class ThreadContinuation<T>(val cont: Continuation<T>) : Continuation<T>{
         override val context: CoroutineContext = cont.context
 
-        override fun resumeWith(result: Result<T>) {
+        override fun resumeWith(result: SuccessOrFailure<T>) {
             executor.execute { cont.resumeWith(result) }
         }
     }
