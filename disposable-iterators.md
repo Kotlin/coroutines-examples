@@ -28,7 +28,7 @@ Here we propose the same for Kotlin.
 - Description: [Handling `finally` blocks in Kotlin coroutines](kotlin-coroutines-informal.md#handling-finally-blocks)
 - Issue #1: [Handling of `finally` blocks](https://github.com/Kotlin/kotlin-coroutines/issues/1)
 - Issue #9: [Allow suspension points in `finally` blocks?](https://github.com/Kotlin/kotlin-coroutines/issues/9)
-- C# [Iterator block implementation details: auto-generated state machines](http://csharpindepth.com/Articles/Chapter6/IteratorBlockImplementation.aspx)
+- C# [Iterator block implementation details: auto-generated state machines](https://csharpindepth.com/Articles/Chapter6/IteratorBlockImplementation.aspx)
 
 ## Implementation
 
